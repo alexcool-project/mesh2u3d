@@ -51,6 +51,12 @@ _VIEWER_LABELS = {
         "hints_zoom": "Rotella zoom",
         "hints_pan": "Destro pan",
         "logo_title": "Visita ArtiFix.it",
+        "btn_wireframe": "Wireframe",
+        "btn_grid": "Griglia",
+        "btn_axes": "Assi",
+        "btn_solid": "Solido",
+        "btn_flat": "Flat",
+        "btn_xray": "X-Ray",
     },
     "en": {
         "loading": "Loading 3D model...",
@@ -66,6 +72,12 @@ _VIEWER_LABELS = {
         "hints_zoom": "Scroll zoom",
         "hints_pan": "Right-click pan",
         "logo_title": "Visit ArtiFix.it",
+        "btn_wireframe": "Wireframe",
+        "btn_grid": "Grid",
+        "btn_axes": "Axes",
+        "btn_solid": "Solid",
+        "btn_flat": "Flat",
+        "btn_xray": "X-Ray",
     },
 }
 
@@ -475,17 +487,17 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="control-group">
     <label>{display_label}</label>
     <div class="row">
-      <button id="btn-wireframe" title="Wireframe">📐</button>
-      <button id="btn-grid" class="active" title="Grid">▦</button>
-      <button id="btn-axes" class="active" title="Axes">✛</button>
+      <button id="btn-wireframe" title="{btn_wireframe}">📐</button>
+      <button id="btn-grid" class="active" title="{btn_grid}">▦</button>
+      <button id="btn-axes" class="active" title="{btn_axes}">✛</button>
     </div>
   </div>
   <div class="control-group">
     <label>{material_label}</label>
     <div class="row">
-      <button id="btn-solid" class="active" title="Solid">◼</button>
-      <button id="btn-flat" title="Flat">◧</button>
-      <button id="btn-xray" title="X-Ray">◯</button>
+      <button id="btn-solid" class="active" title="{btn_solid}">◼</button>
+      <button id="btn-flat" title="{btn_flat}">◧</button>
+      <button id="btn-xray" title="{btn_xray}">◯</button>
     </div>
   </div>
 </div>
@@ -506,18 +518,18 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="control-group">
     <label>{display_label}</label>
     <div class="row">
-      <button class="btn-control" id="btn-wireframe-mobile" title="Wireframe">📐</button>
-      <button class="btn-control active" id="btn-grid-mobile" title="Grid">▦</button>
-      <button class="btn-control active" id="btn-axes-mobile" title="Axes">✛</button>
+      <button class="btn-control" id="btn-wireframe-mobile" title="{btn_wireframe}">📐</button>
+      <button class="btn-control active" id="btn-grid-mobile" title="{btn_grid}">▦</button>
+      <button class="btn-control active" id="btn-axes-mobile" title="{btn_axes}">✛</button>
     </div>
   </div>
 
   <div class="control-group">
     <label>{material_label}</label>
     <div class="row">
-      <button class="btn-control active" id="btn-solid-mobile" title="Solid">◼</button>
-      <button class="btn-control" id="btn-flat-mobile" title="Flat">◧</button>
-      <button class="btn-control" id="btn-xray-mobile" title="X-Ray">◯</button>
+      <button class="btn-control active" id="btn-solid-mobile" title="{btn_solid}">◼</button>
+      <button class="btn-control" id="btn-flat-mobile" title="{btn_flat}">◧</button>
+      <button class="btn-control" id="btn-xray-mobile" title="{btn_xray}">◯</button>
     </div>
   </div>
 </div>
@@ -874,6 +886,12 @@ def mesh_to_html(
         hints_zoom=labels["hints_zoom"],
         hints_pan=labels["hints_pan"],
         logo_title=labels["logo_title"],
+        btn_wireframe=labels["btn_wireframe"],
+        btn_grid=labels["btn_grid"],
+        btn_axes=labels["btn_axes"],
+        btn_solid=labels["btn_solid"],
+        btn_flat=labels["btn_flat"],
+        btn_xray=labels["btn_xray"],
     )
 
     output.write_text(html, encoding="utf-8")
