@@ -9,6 +9,8 @@ Produce un singolo file .html che contiene:
   - Logo cubo ArtiFix in alto a destra (link al sito)
   - Controlli interattivi responsive (pannello modale su mobile)
 
+Supporta due lingue: IT (default) e EN.
+
 Il file risultante è APRIBBILE IN QUALSIASI BROWSER MODERNO
 senza installare nulla, senza account, senza Adobe.
 
@@ -32,10 +34,46 @@ _ARTIFIX_LOGO_URL = (
 )
 
 
+# ---------- Stringhe multilingua per il viewer ----------
+
+_VIEWER_LABELS = {
+    "it": {
+        "loading": "Caricamento modello 3D...",
+        "vertex_short": "Vertici",
+        "triangle_short": "Triangoli",
+        "format_short": "Formato",
+        "controls_title": "🎛️ Controlli",
+        "opacity_label": "Opacità",
+        "display_label": "Visualizzazione",
+        "material_label": "Materiale",
+        "reset_btn": "🔄 Reset",
+        "hints_rotate": "Trascina ruota",
+        "hints_zoom": "Rotella zoom",
+        "hints_pan": "Destro pan",
+        "logo_title": "Visita ArtiFix.it",
+    },
+    "en": {
+        "loading": "Loading 3D model...",
+        "vertex_short": "Vertices",
+        "triangle_short": "Triangles",
+        "format_short": "Format",
+        "controls_title": "🎛️ Controls",
+        "opacity_label": "Opacity",
+        "display_label": "Display",
+        "material_label": "Material",
+        "reset_btn": "🔄 Reset",
+        "hints_rotate": "Drag rotate",
+        "hints_zoom": "Scroll zoom",
+        "hints_pan": "Right-click pan",
+        "logo_title": "Visit ArtiFix.it",
+    },
+}
+
+
 # ---------- Template HTML ----------
 
 _HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="it">
+<html lang="{lang_iso}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -53,7 +91,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   }}
   canvas {{ display: block; touch-action: none; }}
 
-  /* ===== LOGO CUBO ARTIFIX (top-right) ===== */
   #artifix-logo {{
     position: absolute;
     top: 16px;
@@ -77,7 +114,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     filter: drop-shadow(0 2px 8px rgba(74, 158, 255, 0.25));
   }}
 
-  /* ===== INFO PANNELLO DESKTOP ===== */
   #info {{
     position: absolute;
     top: 16px;
@@ -109,7 +145,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 500;
   }}
 
-  /* ===== CONTROLLI DESKTOP ===== */
   #controls {{
     position: absolute;
     top: 88px;
@@ -168,7 +203,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     color: #fff;
   }}
 
-  /* ===== PULSANTE RESET (bottom-right) ===== */
   #reset-btn {{
     position: absolute;
     bottom: 20px;
@@ -191,7 +225,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     border-color: #4a9eff;
   }}
 
-  /* ===== ISTRUZIONI (bottom-center) ===== */
   #hints {{
     position: absolute;
     bottom: 20px;
@@ -215,7 +248,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 500;
   }}
 
-  /* ===== MOBILE-ONLY ELEMENTS ===== */
   #info-mobile {{
     display: none;
     position: absolute;
@@ -253,7 +285,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 500;
   }}
 
-  /* ===== CONTROLLI MOBILE — Pulsante tondo ===== */
   #controls-toggle {{
     display: none;
     position: fixed;
@@ -278,7 +309,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     transform: scale(0.9);
   }}
 
-  /* ===== MODALE CONTROLLI ===== */
   #controls-modal {{
     display: none;
     position: fixed;
@@ -369,18 +399,15 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     color: #fff;
   }}
 
-  /* ===== MEDIA QUERY: MOBILE ≤ 900px ===== */
   @media (max-width: 900px) {{
     #info, #controls, #hints {{ display: none; }}
     #info-mobile {{ display: block; }}
     #controls-toggle {{ display: flex; align-items: center; justify-content: center; }}
     #controls-modal {{ display: block; }}
 
-    /* Logo più piccolo */
     #artifix-logo img {{ width: 42px; height: 42px; }}
     #artifix-logo {{ top: 12px; right: 12px; }}
 
-    /* Reset più compatto */
     #reset-btn {{
       bottom: 24px;
       right: 90px;
@@ -392,7 +419,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     }}
   }}
 
-  /* ===== LOADING ===== */
   #loading {{
     position: absolute;
     top: 50%;
@@ -420,96 +446,88 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 
 <div id="loading">
   <div class="spinner"></div>
-  Caricamento modello 3D...
+  {loading_text}
 </div>
 
-<!-- Logo cubo ArtiFix (top-right, cliccabile) -->
-<a id="artifix-logo" href="https://www.artifix.it" target="_blank" rel="noopener" title="Visita ArtiFix.it">
+<a id="artifix-logo" href="https://www.artifix.it" target="_blank" rel="noopener" title="{logo_title}">
   <img src="{logo_url}" alt="ArtiFix">
 </a>
 
-<!-- Pannello info DESKTOP -->
 <div id="info">
   <div class="project-name">{title}</div>
-  <div class="stat"><span>Vertici</span><span class="value">{vertex_count}</span></div>
-  <div class="stat"><span>Triangoli</span><span class="value">{triangle_count}</span></div>
-  <div class="stat"><span>Formato</span><span class="value">{source_format}</span></div>
+  <div class="stat"><span>{vertex_short}</span><span class="value">{vertex_count}</span></div>
+  <div class="stat"><span>{triangle_short}</span><span class="value">{triangle_count}</span></div>
+  <div class="stat"><span>{format_short}</span><span class="value">{source_format}</span></div>
 </div>
 
-<!-- Pannello info MOBILE (compatto con stats) -->
 <div id="info-mobile">
   <div class="name">{title}</div>
-  <div class="stat"><span>Vertici</span><span class="value">{vertex_count}</span></div>
-  <div class="stat"><span>Triangoli</span><span class="value">{triangle_count}</span></div>
-  <div class="stat"><span>Formato</span><span class="value">{source_format}</span></div>
+  <div class="stat"><span>{vertex_short}</span><span class="value">{vertex_count}</span></div>
+  <div class="stat"><span>{triangle_short}</span><span class="value">{triangle_count}</span></div>
+  <div class="stat"><span>{format_short}</span><span class="value">{source_format}</span></div>
 </div>
 
-<!-- Controlli DESKTOP -->
 <div id="controls">
   <div class="control-group">
-    <label>Opacità</label>
+    <label>{opacity_label}</label>
     <input type="range" id="opacity-slider" min="10" max="100" value="100">
   </div>
   <div class="control-group">
-    <label>Visualizzazione</label>
+    <label>{display_label}</label>
     <div class="row">
       <button id="btn-wireframe" title="Wireframe">📐</button>
-      <button id="btn-grid" class="active" title="Griglia">▦</button>
-      <button id="btn-axes" class="active" title="Assi XYZ">✛</button>
+      <button id="btn-grid" class="active" title="Grid">▦</button>
+      <button id="btn-axes" class="active" title="Axes">✛</button>
     </div>
   </div>
   <div class="control-group">
-    <label>Materiale</label>
+    <label>{material_label}</label>
     <div class="row">
-      <button id="btn-solid" class="active" title="Solido">◼</button>
+      <button id="btn-solid" class="active" title="Solid">◼</button>
       <button id="btn-flat" title="Flat">◧</button>
       <button id="btn-xray" title="X-Ray">◯</button>
     </div>
   </div>
 </div>
 
-<!-- Pulsante flottante per aprire i controlli (MOBILE) -->
-<button id="controls-toggle" title="Controlli">⚙️</button>
+<button id="controls-toggle" title="{controls_title}">⚙️</button>
 
-<!-- Modale controlli (MOBILE) -->
 <div id="controls-modal">
   <div class="modal-header">
-    <h3>🎛️ Controlli</h3>
+    <h3>{controls_title}</h3>
     <button class="close-btn" id="controls-modal-close">✕</button>
   </div>
 
   <div class="control-group">
-    <label>Opacità</label>
+    <label>{opacity_label}</label>
     <input type="range" id="opacity-slider-mobile" min="10" max="100" value="100">
   </div>
 
   <div class="control-group">
-    <label>Visualizzazione</label>
+    <label>{display_label}</label>
     <div class="row">
       <button class="btn-control" id="btn-wireframe-mobile" title="Wireframe">📐</button>
-      <button class="btn-control active" id="btn-grid-mobile" title="Griglia">▦</button>
-      <button class="btn-control active" id="btn-axes-mobile" title="Assi XYZ">✛</button>
+      <button class="btn-control active" id="btn-grid-mobile" title="Grid">▦</button>
+      <button class="btn-control active" id="btn-axes-mobile" title="Axes">✛</button>
     </div>
   </div>
 
   <div class="control-group">
-    <label>Materiale</label>
+    <label>{material_label}</label>
     <div class="row">
-      <button class="btn-control active" id="btn-solid-mobile" title="Solido">◼</button>
+      <button class="btn-control active" id="btn-solid-mobile" title="Solid">◼</button>
       <button class="btn-control" id="btn-flat-mobile" title="Flat">◧</button>
       <button class="btn-control" id="btn-xray-mobile" title="X-Ray">◯</button>
     </div>
   </div>
 </div>
 
-<!-- Pulsante reset vista -->
-<button id="reset-btn" title="Reimposta vista">🔄 Reset</button>
+<button id="reset-btn" title="Reset view">{reset_btn}</button>
 
-<!-- Istruzioni (DESKTOP) -->
 <div id="hints">
-  <span>🖱️ <b>Trascina</b> ruota</span>
-  <span>🔍 <b>Rotella</b> zoom</span>
-  <span>✋ <b>Destro</b> pan</span>
+  <span>🖱️ <b>{hints_rotate}</b></span>
+  <span>🔍 <b>{hints_zoom}</b></span>
+  <span>✋ <b>{hints_pan}</b></span>
 </div>
 
 <script type="importmap">
@@ -525,10 +543,8 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 import * as THREE from 'three';
 import {{ OrbitControls }} from 'three/addons/controls/OrbitControls.js';
 
-// ---- Dati mesh embedded ----
 const MESH_DATA = {mesh_json};
 
-// ---- Setup scena ----
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d1117);
 
@@ -546,7 +562,6 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-// ---- Geometria ----
 const geometry = new THREE.BufferGeometry();
 geometry.setAttribute(
   'position',
@@ -556,7 +571,6 @@ geometry.setIndex(MESH_DATA.triangles_flat);
 geometry.computeVertexNormals();
 geometry.computeBoundingSphere();
 
-// ---- Materiale principale ----
 const material = new THREE.MeshStandardMaterial({{
   color: 0x4a9eff,
   metalness: 0.25,
@@ -570,7 +584,6 @@ const material = new THREE.MeshStandardMaterial({{
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
-// ---- Wireframe overlay ----
 const edges = new THREE.EdgesGeometry(geometry, 30);
 const lineMaterial = new THREE.LineBasicMaterial({{
   color: 0x1f77b4,
@@ -582,7 +595,6 @@ const wireframe = new THREE.LineSegments(edges, lineMaterial);
 wireframe.visible = false;
 mesh.add(wireframe);
 
-// ---- Centra mesh e camera ----
 const center = geometry.boundingSphere.center.clone();
 const radius = geometry.boundingSphere.radius;
 
@@ -591,7 +603,6 @@ mesh.position.sub(center);
 camera.position.set(radius * 2.5, radius * 2, radius * 2.5);
 camera.lookAt(0, 0, 0);
 
-// ---- Luci ----
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
@@ -607,16 +618,13 @@ const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
 rimLight.position.set(0, -5, 0);
 scene.add(rimLight);
 
-// ---- Griglia ----
 const grid = new THREE.GridHelper(radius * 6, 30, 0x21262d, 0x161b22);
 grid.position.y = -radius;
 scene.add(grid);
 
-// ---- Assi XYZ ----
 const axes = new THREE.AxesHelper(radius * 1.8);
 scene.add(axes);
 
-// ---- Controlli orbita ----
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
@@ -630,25 +638,21 @@ controls.touches = {{
   TWO: THREE.TOUCH.DOLLY_PAN,
 }};
 
-// ---- Info camera default ----
 const DEFAULT_CAM_POS = camera.position.clone();
 const DEFAULT_CAM_TARGET = new THREE.Vector3(0, 0, 0);
 
-// ---- Resize ----
 window.addEventListener('resize', () => {{
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }});
 
-// ---- Loop animazione ----
 function animate() {{
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
 }}
 
-// ---- Nascondi loading ----
 requestAnimationFrame(() => {{
   requestAnimationFrame(() => {{
     document.getElementById('loading').style.display = 'none';
@@ -656,11 +660,6 @@ requestAnimationFrame(() => {{
   }});
 }});
 
-// ============================================================
-// CONTROLLI INTERATTIVI
-// ============================================================
-
-// --- Opacità ---
 const opacitySlider = document.getElementById('opacity-slider');
 const opacitySliderMobile = document.getElementById('opacity-slider-mobile');
 
@@ -676,7 +675,6 @@ function setOpacity(val) {{
 opacitySlider.addEventListener('input', (e) => setOpacity(e.target.value));
 opacitySliderMobile.addEventListener('input', (e) => setOpacity(e.target.value));
 
-// --- Wireframe ---
 const btnWireframe = document.getElementById('btn-wireframe');
 const btnWireframeMobile = document.getElementById('btn-wireframe-mobile');
 let wireframeOn = false;
@@ -691,7 +689,6 @@ function toggleWireframe() {{
 btnWireframe.addEventListener('click', toggleWireframe);
 btnWireframeMobile.addEventListener('click', toggleWireframe);
 
-// --- Griglia ---
 const btnGrid = document.getElementById('btn-grid');
 const btnGridMobile = document.getElementById('btn-grid-mobile');
 
@@ -704,7 +701,6 @@ function toggleGrid() {{
 btnGrid.addEventListener('click', toggleGrid);
 btnGridMobile.addEventListener('click', toggleGrid);
 
-// --- Assi ---
 const btnAxes = document.getElementById('btn-axes');
 const btnAxesMobile = document.getElementById('btn-axes-mobile');
 
@@ -717,7 +713,6 @@ function toggleAxes() {{
 btnAxes.addEventListener('click', toggleAxes);
 btnAxesMobile.addEventListener('click', toggleAxes);
 
-// --- Materiale ---
 const btnSolid = document.getElementById('btn-solid');
 const btnFlat = document.getElementById('btn-flat');
 const btnXray = document.getElementById('btn-xray');
@@ -765,14 +760,12 @@ btnSolidMobile.addEventListener('click', () => setMaterial('solid'));
 btnFlatMobile.addEventListener('click', () => setMaterial('flat'));
 btnXrayMobile.addEventListener('click', () => setMaterial('xray'));
 
-// --- Reset camera ---
 document.getElementById('reset-btn').addEventListener('click', () => {{
   camera.position.copy(DEFAULT_CAM_POS);
   controls.target.copy(DEFAULT_CAM_TARGET);
   controls.update();
 }});
 
-// --- Modale controlli (MOBILE) ---
 const controlsToggle = document.getElementById('controls-toggle');
 const controlsModal = document.getElementById('controls-modal');
 const controlsModalClose = document.getElementById('controls-modal-close');
@@ -791,21 +784,18 @@ function closeControlsModal(e) {{
   controlsModal.classList.remove('open');
 }}
 
-// Supporto sia click che touch
 controlsToggle.addEventListener('click', openControlsModal);
 controlsToggle.addEventListener('touchstart', openControlsModal, {{ passive: false }});
 
 controlsModalClose.addEventListener('click', closeControlsModal);
 controlsModalClose.addEventListener('touchstart', closeControlsModal, {{ passive: false }});
 
-// Chiudi modale cliccando fuori
 controlsModal.addEventListener('click', (e) => {{
   if (e.target === controlsModal) {{
     closeControlsModal();
   }}
 }});
 
-// --- Doppio tap = fullscreen (desktop) ---
 renderer.domElement.addEventListener('dblclick', () => {{
   if (!document.fullscreenElement) {{
     document.documentElement.requestFullscreen();
@@ -836,6 +826,7 @@ def mesh_to_html(
     *,
     title: str | None = None,
     source_format: str = "STL",
+    lang: str = "it",
 ) -> Path:
     """
     Genera un file HTML 3D self-contained con three.js e la mesh embedded.
@@ -846,6 +837,7 @@ def mesh_to_html(
     output : percorso del file .html risultante
     title : titolo della pagina (default: nome mesh)
     source_format : formato del file originale (per info)
+    lang : lingua del viewer ("it" o "en", default "it")
 
     Returns
     -------
@@ -854,13 +846,34 @@ def mesh_to_html(
     output = Path(output)
     title = title or mesh.name or "Modello 3D"
 
+    # Normalizza lang
+    lang = (lang or "it").lower()
+    if lang not in _VIEWER_LABELS:
+        lang = "it"
+    labels = _VIEWER_LABELS[lang]
+    lang_iso = "it" if lang == "it" else "en"
+
     html = _HTML_TEMPLATE.format(
         title=title,
+        lang_iso=lang_iso,
         vertex_count=f"{mesh.vertex_count:,}".replace(",", "."),
         triangle_count=f"{mesh.triangle_count:,}".replace(",", "."),
         source_format=source_format.upper(),
         logo_url=_ARTIFIX_LOGO_URL,
         mesh_json=_mesh_to_json(mesh),
+        loading_text=labels["loading"],
+        vertex_short=labels["vertex_short"],
+        triangle_short=labels["triangle_short"],
+        format_short=labels["format_short"],
+        controls_title=labels["controls_title"],
+        opacity_label=labels["opacity_label"],
+        display_label=labels["display_label"],
+        material_label=labels["material_label"],
+        reset_btn=labels["reset_btn"],
+        hints_rotate=labels["hints_rotate"],
+        hints_zoom=labels["hints_zoom"],
+        hints_pan=labels["hints_pan"],
+        logo_title=labels["logo_title"],
     )
 
     output.write_text(html, encoding="utf-8")
