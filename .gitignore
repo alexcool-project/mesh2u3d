@@ -13,3 +13,4 @@ Thumbs.db
 *.u3d
 !examples/*.u3d
 mesh2u3d.egg-info/
+secrets.env
