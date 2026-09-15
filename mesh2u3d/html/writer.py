@@ -50,9 +50,8 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     background: #0d1117;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #e6edf3;
-    touch-action: none;
   }}
-  canvas {{ display: block; }}
+  canvas {{ display: block; touch-action: none; }}
 
   /* ===== LOGO CUBO ARTIFIX (top-right) ===== */
   #artifix-logo {{
@@ -64,6 +63,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     transition: opacity 0.3s ease, transform 0.3s ease;
     text-decoration: none;
     display: block;
+    pointer-events: auto;
   }}
   #artifix-logo:hover {{
     opacity: 1.0;
@@ -182,8 +182,9 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     color: #e6edf3;
     font-size: 13px;
     cursor: pointer;
-    z-index: 5;
+    z-index: 15;
     transition: all 0.15s ease;
+    pointer-events: auto;
   }}
   #reset-btn:hover {{
     background: #21262d;
@@ -214,68 +215,89 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 500;
   }}
 
-  /* ===== MOBILE-ONLY ELEMENTS (nascosti di default su desktop) ===== */
+  /* ===== MOBILE-ONLY ELEMENTS ===== */
   #info-mobile {{
     display: none;
     position: absolute;
-    top: 16px;
-    left: 16px;
-    background: rgba(13,17,23,0.85);
+    top: 14px;
+    left: 14px;
+    background: rgba(13,17,23,0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     padding: 10px 14px;
     border-radius: 10px;
     border: 1px solid #21262d;
-    font-size: 13px;
-    font-weight: 600;
-    color: #4a9eff;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #8b949e;
     z-index: 5;
     max-width: 55%;
+    pointer-events: none;
+  }}
+  #info-mobile .name {{
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a9eff;
+    margin-bottom: 6px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }}
+  #info-mobile .stat {{
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }}
+  #info-mobile .stat .value {{
+    color: #e6edf3;
+    font-weight: 500;
+  }}
 
+  /* ===== CONTROLLI MOBILE — Pulsante tondo ===== */
   #controls-toggle {{
     display: none;
-    position: absolute;
-    bottom: 80px;
-    right: 20px;
-    width: 52px;
-    height: 52px;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1f77b4 0%, #4a9eff 100%);
     border: none;
     color: #ffffff;
-    font-size: 22px;
+    font-size: 24px;
     cursor: pointer;
-    z-index: 15;
-    box-shadow: 0 4px 16px rgba(74, 158, 255, 0.4);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 16px rgba(74, 158, 255, 0.5);
+    transition: transform 0.15s ease;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
   }}
   #controls-toggle:active {{
-    transform: scale(0.92);
-    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.6);
+    transform: scale(0.9);
   }}
 
+  /* ===== MODALE CONTROLLI ===== */
   #controls-modal {{
     display: none;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(13,17,23,0.97);
+    background: rgba(13,17,23,0.98);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     border-top: 1px solid #21262d;
     padding: 20px;
-    z-index: 20;
+    z-index: 2000;
     max-height: 70vh;
     overflow-y: auto;
     transform: translateY(100%);
     transition: transform 0.3s ease;
+    pointer-events: auto;
   }}
   #controls-modal.open {{
     transform: translateY(0);
@@ -294,14 +316,15 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 600;
   }}
   #controls-modal .close-btn {{
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #21262d;
     border: none;
     color: #e6edf3;
     font-size: 18px;
     cursor: pointer;
+    pointer-events: auto;
   }}
   #controls-modal .control-group {{
     margin-bottom: 18px;
@@ -317,7 +340,8 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   #controls-modal input[type="range"] {{
     width: 100%;
     accent-color: #4a9eff;
-    height: 6px;
+    height: 8px;
+    pointer-events: auto;
   }}
   #controls-modal .row {{
     display: flex;
@@ -327,14 +351,17 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   #controls-modal button.btn-control {{
     flex: 1;
     min-width: 70px;
-    padding: 12px 10px;
+    padding: 14px 10px;
     background: #21262d;
     color: #e6edf3;
     border: 1px solid #30363d;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 18px;
     cursor: pointer;
     transition: all 0.15s ease;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
   }}
   #controls-modal button.btn-control.active {{
     background: #1f77b4;
@@ -344,24 +371,22 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 
   /* ===== MEDIA QUERY: MOBILE ≤ 900px ===== */
   @media (max-width: 900px) {{
-    /* Nascondi pannelli desktop */
     #info, #controls, #hints {{ display: none; }}
-
-    /* Mostra elementi mobile */
     #info-mobile {{ display: block; }}
     #controls-toggle {{ display: flex; align-items: center; justify-content: center; }}
+    #controls-modal {{ display: block; }}
 
-    /* Riduci logo */
-    #artifix-logo img {{ width: 44px; height: 44px; }}
-    #artifix-logo {{ top: 14px; right: 14px; }}
+    /* Logo più piccolo */
+    #artifix-logo img {{ width: 42px; height: 42px; }}
+    #artifix-logo {{ top: 12px; right: 12px; }}
 
-    /* Reset button più compatto */
+    /* Reset più compatto */
     #reset-btn {{
-      bottom: 20px;
-      right: 20px;
-      padding: 12px 16px;
+      bottom: 24px;
+      right: 90px;
+      padding: 12px 18px;
       font-size: 13px;
-      border-radius: 24px;
+      border-radius: 28px;
       background: rgba(13,17,23,0.9);
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }}
@@ -411,8 +436,13 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="stat"><span>Formato</span><span class="value">{source_format}</span></div>
 </div>
 
-<!-- Pannello info MOBILE (solo nome) -->
-<div id="info-mobile">{title}</div>
+<!-- Pannello info MOBILE (compatto con stats) -->
+<div id="info-mobile">
+  <div class="name">{title}</div>
+  <div class="stat"><span>Vertici</span><span class="value">{vertex_count}</span></div>
+  <div class="stat"><span>Triangoli</span><span class="value">{triangle_count}</span></div>
+  <div class="stat"><span>Formato</span><span class="value">{source_format}</span></div>
+</div>
 
 <!-- Controlli DESKTOP -->
 <div id="controls">
@@ -595,7 +625,6 @@ controls.minDistance = radius * 0.3;
 controls.maxDistance = radius * 30;
 controls.autoRotate = false;
 controls.autoRotateSpeed = 1.5;
-// Touch: abilita gesture
 controls.touches = {{
   ONE: THREE.TOUCH.ROTATE,
   TWO: THREE.TOUCH.DOLLY_PAN,
@@ -619,7 +648,7 @@ function animate() {{
   renderer.render(scene, camera);
 }}
 
-// ---- Nascondi loading dopo primo render ----
+// ---- Nascondi loading ----
 requestAnimationFrame(() => {{
   requestAnimationFrame(() => {{
     document.getElementById('loading').style.display = 'none';
@@ -631,7 +660,7 @@ requestAnimationFrame(() => {{
 // CONTROLLI INTERATTIVI
 // ============================================================
 
-// --- Opacità (desktop + mobile sincronizzati) ---
+// --- Opacità ---
 const opacitySlider = document.getElementById('opacity-slider');
 const opacitySliderMobile = document.getElementById('opacity-slider-mobile');
 
@@ -640,9 +669,8 @@ function setOpacity(val) {{
   material.transparent = v < 1.0;
   material.opacity = v;
   material.needsUpdate = true;
-  // Sincronizza i due slider
-  opacitySlider.value = val;
-  opacitySliderMobile.value = val;
+  if (opacitySlider) opacitySlider.value = val;
+  if (opacitySliderMobile) opacitySliderMobile.value = val;
 }}
 
 opacitySlider.addEventListener('input', (e) => setOpacity(e.target.value));
@@ -689,7 +717,7 @@ function toggleAxes() {{
 btnAxes.addEventListener('click', toggleAxes);
 btnAxesMobile.addEventListener('click', toggleAxes);
 
-// --- Materiale: Solido / Flat / X-Ray ---
+// --- Materiale ---
 const btnSolid = document.getElementById('btn-solid');
 const btnFlat = document.getElementById('btn-flat');
 const btnXray = document.getElementById('btn-xray');
@@ -698,7 +726,6 @@ const btnFlatMobile = document.getElementById('btn-flat-mobile');
 const btnXrayMobile = document.getElementById('btn-xray-mobile');
 
 function setMaterial(mode) {{
-  // Reset classi
   [btnSolid, btnFlat, btnXray, btnSolidMobile, btnFlatMobile, btnXrayMobile].forEach(b => b.classList.remove('active'));
 
   if (mode === 'solid') {{
@@ -750,18 +777,31 @@ const controlsToggle = document.getElementById('controls-toggle');
 const controlsModal = document.getElementById('controls-modal');
 const controlsModalClose = document.getElementById('controls-modal-close');
 
-controlsToggle.addEventListener('click', () => {{
+function openControlsModal(e) {{
+  e.preventDefault();
+  e.stopPropagation();
   controlsModal.classList.add('open');
-}});
+}}
 
-controlsModalClose.addEventListener('click', () => {{
+function closeControlsModal(e) {{
+  if (e) {{
+    e.preventDefault();
+    e.stopPropagation();
+  }}
   controlsModal.classList.remove('open');
-}});
+}}
+
+// Supporto sia click che touch
+controlsToggle.addEventListener('click', openControlsModal);
+controlsToggle.addEventListener('touchstart', openControlsModal, {{ passive: false }});
+
+controlsModalClose.addEventListener('click', closeControlsModal);
+controlsModalClose.addEventListener('touchstart', closeControlsModal, {{ passive: false }});
 
 // Chiudi modale cliccando fuori
 controlsModal.addEventListener('click', (e) => {{
   if (e.target === controlsModal) {{
-    controlsModal.classList.remove('open');
+    closeControlsModal();
   }}
 }});
 
