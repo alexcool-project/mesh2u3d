@@ -43,7 +43,10 @@ class MeshData:
 class MeshReader:
     """Factory per leggere mesh da vari formati."""
 
-    SUPPORTED = {".stl", ".obj", ".ply", ".glb", ".gltf", ".off"}
+    SUPPORTED = {
+        ".stl", ".obj", ".ply", ".glb", ".gltf", ".off",
+        ".dae", ".3mf", ".fbx", ".wrl",
+    }
 
     @classmethod
     def read(cls, path: str | Path) -> MeshData:
