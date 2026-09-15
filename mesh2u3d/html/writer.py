@@ -5,9 +5,9 @@ Produce un singolo file .html che contiene:
   - three.js embedded (via CDN)
   - La mesh serializzata come JSON inline
   - Controlli avanzati: rotazione, zoom, pan, trasparenza, wireframe
-  - Pannello info progetto
+  - Pannello info progetto (desktop + mobile compatto)
   - Logo cubo ArtiFix in alto a destra (link al sito)
-  - Controlli interattivi
+  - Controlli interattivi responsive (pannello modale su mobile)
 
 Il file risultante è APRIBBILE IN QUALSIASI BROWSER MODERNO
 senza installare nulla, senza account, senza Adobe.
@@ -38,11 +38,11 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>{title} — ArtiFix 3D Viewer</title>
 <link rel="icon" href="{logo_url}">
 <style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+  * {{ margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }}
   html, body {{
     width: 100%;
     height: 100%;
@@ -50,10 +50,11 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     background: #0d1117;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #e6edf3;
+    touch-action: none;
   }}
   canvas {{ display: block; }}
 
-  /* Logo cubo ArtiFix (top-right) */
+  /* ===== LOGO CUBO ARTIFIX (top-right) ===== */
   #artifix-logo {{
     position: absolute;
     top: 16px;
@@ -76,13 +77,14 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     filter: drop-shadow(0 2px 8px rgba(74, 158, 255, 0.25));
   }}
 
-  /* Info pannello (top-left) */
+  /* ===== INFO PANNELLO DESKTOP ===== */
   #info {{
     position: absolute;
     top: 16px;
     left: 16px;
     background: rgba(13,17,23,0.85);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 14px 18px;
     border-radius: 10px;
     border: 1px solid #21262d;
@@ -107,13 +109,14 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 500;
   }}
 
-  /* Controlli (top-right, sotto il logo) */
+  /* ===== CONTROLLI DESKTOP ===== */
   #controls {{
     position: absolute;
     top: 88px;
     right: 16px;
     background: rgba(13,17,23,0.85);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 14px;
     border-radius: 10px;
     border: 1px solid #21262d;
@@ -165,7 +168,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     color: #fff;
   }}
 
-  /* Pulsante reset (bottom-right) */
+  /* ===== PULSANTE RESET (bottom-right) ===== */
   #reset-btn {{
     position: absolute;
     bottom: 20px;
@@ -173,6 +176,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     padding: 10px 16px;
     background: rgba(13,17,23,0.85);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid #21262d;
     border-radius: 8px;
     color: #e6edf3;
@@ -186,7 +190,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     border-color: #4a9eff;
   }}
 
-  /* Istruzioni (bottom-center) */
+  /* ===== ISTRUZIONI (bottom-center) ===== */
   #hints {{
     position: absolute;
     bottom: 20px;
@@ -194,6 +198,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     transform: translateX(-50%);
     background: rgba(13,17,23,0.7);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 12px;
@@ -209,12 +214,160 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     font-weight: 500;
   }}
 
-  /* Responsive */
-  @media (max-width: 900px) {{
-    #info, #controls, #hints {{ display: none; }}
+  /* ===== MOBILE-ONLY ELEMENTS (nascosti di default su desktop) ===== */
+  #info-mobile {{
+    display: none;
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(13,17,23,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid #21262d;
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a9eff;
+    z-index: 5;
+    max-width: 55%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }}
 
-  /* Loading */
+  #controls-toggle {{
+    display: none;
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f77b4 0%, #4a9eff 100%);
+    border: none;
+    color: #ffffff;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 15;
+    box-shadow: 0 4px 16px rgba(74, 158, 255, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }}
+  #controls-toggle:active {{
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(74, 158, 255, 0.6);
+  }}
+
+  #controls-modal {{
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(13,17,23,0.97);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-top: 1px solid #21262d;
+    padding: 20px;
+    z-index: 20;
+    max-height: 70vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }}
+  #controls-modal.open {{
+    transform: translateY(0);
+  }}
+  #controls-modal .modal-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #21262d;
+  }}
+  #controls-modal .modal-header h3 {{
+    font-size: 16px;
+    color: #4a9eff;
+    font-weight: 600;
+  }}
+  #controls-modal .close-btn {{
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #21262d;
+    border: none;
+    color: #e6edf3;
+    font-size: 18px;
+    cursor: pointer;
+  }}
+  #controls-modal .control-group {{
+    margin-bottom: 18px;
+  }}
+  #controls-modal label {{
+    display: block;
+    font-size: 13px;
+    color: #8b949e;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }}
+  #controls-modal input[type="range"] {{
+    width: 100%;
+    accent-color: #4a9eff;
+    height: 6px;
+  }}
+  #controls-modal .row {{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }}
+  #controls-modal button.btn-control {{
+    flex: 1;
+    min-width: 70px;
+    padding: 12px 10px;
+    background: #21262d;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }}
+  #controls-modal button.btn-control.active {{
+    background: #1f77b4;
+    border-color: #4a9eff;
+    color: #fff;
+  }}
+
+  /* ===== MEDIA QUERY: MOBILE ≤ 900px ===== */
+  @media (max-width: 900px) {{
+    /* Nascondi pannelli desktop */
+    #info, #controls, #hints {{ display: none; }}
+
+    /* Mostra elementi mobile */
+    #info-mobile {{ display: block; }}
+    #controls-toggle {{ display: flex; align-items: center; justify-content: center; }}
+
+    /* Riduci logo */
+    #artifix-logo img {{ width: 44px; height: 44px; }}
+    #artifix-logo {{ top: 14px; right: 14px; }}
+
+    /* Reset button più compatto */
+    #reset-btn {{
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      font-size: 13px;
+      border-radius: 24px;
+      background: rgba(13,17,23,0.9);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }}
+  }}
+
+  /* ===== LOADING ===== */
   #loading {{
     position: absolute;
     top: 50%;
@@ -250,6 +403,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <img src="{logo_url}" alt="ArtiFix">
 </a>
 
+<!-- Pannello info DESKTOP -->
 <div id="info">
   <div class="project-name">{title}</div>
   <div class="stat"><span>Vertici</span><span class="value">{vertex_count}</span></div>
@@ -257,6 +411,10 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="stat"><span>Formato</span><span class="value">{source_format}</span></div>
 </div>
 
+<!-- Pannello info MOBILE (solo nome) -->
+<div id="info-mobile">{title}</div>
+
+<!-- Controlli DESKTOP -->
 <div id="controls">
   <div class="control-group">
     <label>Opacità</label>
@@ -280,8 +438,44 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   </div>
 </div>
 
-<button id="reset-btn" title="Reimposta vista">🔄 Reset vista</button>
+<!-- Pulsante flottante per aprire i controlli (MOBILE) -->
+<button id="controls-toggle" title="Controlli">⚙️</button>
 
+<!-- Modale controlli (MOBILE) -->
+<div id="controls-modal">
+  <div class="modal-header">
+    <h3>🎛️ Controlli</h3>
+    <button class="close-btn" id="controls-modal-close">✕</button>
+  </div>
+
+  <div class="control-group">
+    <label>Opacità</label>
+    <input type="range" id="opacity-slider-mobile" min="10" max="100" value="100">
+  </div>
+
+  <div class="control-group">
+    <label>Visualizzazione</label>
+    <div class="row">
+      <button class="btn-control" id="btn-wireframe-mobile" title="Wireframe">📐</button>
+      <button class="btn-control active" id="btn-grid-mobile" title="Griglia">▦</button>
+      <button class="btn-control active" id="btn-axes-mobile" title="Assi XYZ">✛</button>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label>Materiale</label>
+    <div class="row">
+      <button class="btn-control active" id="btn-solid-mobile" title="Solido">◼</button>
+      <button class="btn-control" id="btn-flat-mobile" title="Flat">◧</button>
+      <button class="btn-control" id="btn-xray-mobile" title="X-Ray">◯</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pulsante reset vista -->
+<button id="reset-btn" title="Reimposta vista">🔄 Reset</button>
+
+<!-- Istruzioni (DESKTOP) -->
 <div id="hints">
   <span>🖱️ <b>Trascina</b> ruota</span>
   <span>🔍 <b>Rotella</b> zoom</span>
@@ -346,7 +540,7 @@ const material = new THREE.MeshStandardMaterial({{
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
-// ---- Wireframe overlay (edge detection) ----
+// ---- Wireframe overlay ----
 const edges = new THREE.EdgesGeometry(geometry, 30);
 const lineMaterial = new THREE.LineBasicMaterial({{
   color: 0x1f77b4,
@@ -401,8 +595,13 @@ controls.minDistance = radius * 0.3;
 controls.maxDistance = radius * 30;
 controls.autoRotate = false;
 controls.autoRotateSpeed = 1.5;
+// Touch: abilita gesture
+controls.touches = {{
+  ONE: THREE.TOUCH.ROTATE,
+  TWO: THREE.TOUCH.DOLLY_PAN,
+}};
 
-// ---- Info camera default (per reset) ----
+// ---- Info camera default ----
 const DEFAULT_CAM_POS = camera.position.clone();
 const DEFAULT_CAM_TARGET = new THREE.Vector3(0, 0, 0);
 
@@ -420,7 +619,7 @@ function animate() {{
   renderer.render(scene, camera);
 }}
 
-// ---- UI: nascondi loading dopo il primo render ----
+// ---- Nascondi loading dopo primo render ----
 requestAnimationFrame(() => {{
   requestAnimationFrame(() => {{
     document.getElementById('loading').style.display = 'none';
@@ -432,78 +631,112 @@ requestAnimationFrame(() => {{
 // CONTROLLI INTERATTIVI
 // ============================================================
 
-// --- Opacità ---
+// --- Opacità (desktop + mobile sincronizzati) ---
 const opacitySlider = document.getElementById('opacity-slider');
-opacitySlider.addEventListener('input', (e) => {{
-  const val = parseInt(e.target.value) / 100;
-  material.transparent = val < 1.0;
-  material.opacity = val;
+const opacitySliderMobile = document.getElementById('opacity-slider-mobile');
+
+function setOpacity(val) {{
+  const v = parseInt(val) / 100;
+  material.transparent = v < 1.0;
+  material.opacity = v;
   material.needsUpdate = true;
-}});
+  // Sincronizza i due slider
+  opacitySlider.value = val;
+  opacitySliderMobile.value = val;
+}}
+
+opacitySlider.addEventListener('input', (e) => setOpacity(e.target.value));
+opacitySliderMobile.addEventListener('input', (e) => setOpacity(e.target.value));
 
 // --- Wireframe ---
 const btnWireframe = document.getElementById('btn-wireframe');
+const btnWireframeMobile = document.getElementById('btn-wireframe-mobile');
 let wireframeOn = false;
-btnWireframe.addEventListener('click', () => {{
+
+function toggleWireframe() {{
   wireframeOn = !wireframeOn;
   wireframe.visible = wireframeOn;
   btnWireframe.classList.toggle('active', wireframeOn);
-}});
+  btnWireframeMobile.classList.toggle('active', wireframeOn);
+}}
+
+btnWireframe.addEventListener('click', toggleWireframe);
+btnWireframeMobile.addEventListener('click', toggleWireframe);
 
 // --- Griglia ---
 const btnGrid = document.getElementById('btn-grid');
-btnGrid.addEventListener('click', () => {{
+const btnGridMobile = document.getElementById('btn-grid-mobile');
+
+function toggleGrid() {{
   grid.visible = !grid.visible;
   btnGrid.classList.toggle('active', grid.visible);
-}});
+  btnGridMobile.classList.toggle('active', grid.visible);
+}}
+
+btnGrid.addEventListener('click', toggleGrid);
+btnGridMobile.addEventListener('click', toggleGrid);
 
 // --- Assi ---
 const btnAxes = document.getElementById('btn-axes');
-btnAxes.addEventListener('click', () => {{
+const btnAxesMobile = document.getElementById('btn-axes-mobile');
+
+function toggleAxes() {{
   axes.visible = !axes.visible;
   btnAxes.classList.toggle('active', axes.visible);
-}});
+  btnAxesMobile.classList.toggle('active', axes.visible);
+}}
 
-// --- Materiale: Solido ---
+btnAxes.addEventListener('click', toggleAxes);
+btnAxesMobile.addEventListener('click', toggleAxes);
+
+// --- Materiale: Solido / Flat / X-Ray ---
 const btnSolid = document.getElementById('btn-solid');
 const btnFlat = document.getElementById('btn-flat');
 const btnXray = document.getElementById('btn-xray');
+const btnSolidMobile = document.getElementById('btn-solid-mobile');
+const btnFlatMobile = document.getElementById('btn-flat-mobile');
+const btnXrayMobile = document.getElementById('btn-xray-mobile');
 
-btnSolid.addEventListener('click', () => {{
-  material.flatShading = false;
-  material.transparent = false;
-  material.opacity = 1.0;
-  material.color.setHex(0x4a9eff);
-  material.needsUpdate = true;
-  opacitySlider.value = 100;
-  btnSolid.classList.add('active');
-  btnFlat.classList.remove('active');
-  btnXray.classList.remove('active');
-}});
+function setMaterial(mode) {{
+  // Reset classi
+  [btnSolid, btnFlat, btnXray, btnSolidMobile, btnFlatMobile, btnXrayMobile].forEach(b => b.classList.remove('active'));
 
-btnFlat.addEventListener('click', () => {{
-  material.flatShading = true;
-  material.transparent = false;
-  material.opacity = 1.0;
-  material.color.setHex(0x6bb6ff);
-  material.needsUpdate = true;
-  opacitySlider.value = 100;
-  btnFlat.classList.add('active');
-  btnSolid.classList.remove('active');
-  btnXray.classList.remove('active');
-}});
+  if (mode === 'solid') {{
+    material.flatShading = false;
+    material.transparent = false;
+    material.opacity = 1.0;
+    material.color.setHex(0x4a9eff);
+    material.needsUpdate = true;
+    btnSolid.classList.add('active');
+    btnSolidMobile.classList.add('active');
+    setOpacity(100);
+  }} else if (mode === 'flat') {{
+    material.flatShading = true;
+    material.transparent = false;
+    material.opacity = 1.0;
+    material.color.setHex(0x6bb6ff);
+    material.needsUpdate = true;
+    btnFlat.classList.add('active');
+    btnFlatMobile.classList.add('active');
+    setOpacity(100);
+  }} else if (mode === 'xray') {{
+    material.flatShading = false;
+    material.transparent = true;
+    material.opacity = 0.35;
+    material.color.setHex(0x9bc4ff);
+    material.needsUpdate = true;
+    btnXray.classList.add('active');
+    btnXrayMobile.classList.add('active');
+    setOpacity(35);
+  }}
+}}
 
-btnXray.addEventListener('click', () => {{
-  material.flatShading = false;
-  material.transparent = true;
-  material.opacity = 0.35;
-  material.color.setHex(0x9bc4ff);
-  material.needsUpdate = true;
-  opacitySlider.value = 35;
-  btnXray.classList.add('active');
-  btnSolid.classList.remove('active');
-  btnFlat.classList.remove('active');
-}});
+btnSolid.addEventListener('click', () => setMaterial('solid'));
+btnFlat.addEventListener('click', () => setMaterial('flat'));
+btnXray.addEventListener('click', () => setMaterial('xray'));
+btnSolidMobile.addEventListener('click', () => setMaterial('solid'));
+btnFlatMobile.addEventListener('click', () => setMaterial('flat'));
+btnXrayMobile.addEventListener('click', () => setMaterial('xray'));
 
 // --- Reset camera ---
 document.getElementById('reset-btn').addEventListener('click', () => {{
@@ -512,7 +745,27 @@ document.getElementById('reset-btn').addEventListener('click', () => {{
   controls.update();
 }});
 
-// --- Doppio click = fullscreen ---
+// --- Modale controlli (MOBILE) ---
+const controlsToggle = document.getElementById('controls-toggle');
+const controlsModal = document.getElementById('controls-modal');
+const controlsModalClose = document.getElementById('controls-modal-close');
+
+controlsToggle.addEventListener('click', () => {{
+  controlsModal.classList.add('open');
+}});
+
+controlsModalClose.addEventListener('click', () => {{
+  controlsModal.classList.remove('open');
+}});
+
+// Chiudi modale cliccando fuori
+controlsModal.addEventListener('click', (e) => {{
+  if (e.target === controlsModal) {{
+    controlsModal.classList.remove('open');
+  }}
+}});
+
+// --- Doppio tap = fullscreen (desktop) ---
 renderer.domElement.addEventListener('dblclick', () => {{
   if (!document.fullscreenElement) {{
     document.documentElement.requestFullscreen();
