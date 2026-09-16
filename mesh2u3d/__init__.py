@@ -5,7 +5,7 @@ API pubblica di alto livello:
     - MeshReader / MeshData
     - U3DWriter / mesh_to_u3d / meshes_to_u3d
     - mesh_to_html
-    - mesh_to_pdf / embed_u3d_in_pdf
+    - embed_u3d_in_pdf
     - convert_3d_file (universale, multi-formato)
 
 Supporto bilingue IT/EN per il viewer HTML.
@@ -31,7 +31,7 @@ from .u3d.validator import validate_u3d, U3DValidationReport
 from .html.writer import mesh_to_html
 
 # --- PDF: embed U3D in PDF 1.7 ---
-from .pdf.embedder import embed_u3d_in_pdf, mesh_to_pdf
+from .pdf.embedder import embed_u3d_in_pdf
 
 # --- Converter universale (NOVITÀ v0.2.0) ---
 from .converter import convert_3d_file
@@ -53,7 +53,6 @@ __all__ = [
     "U3DValidationReport",
     "mesh_to_html",
     "embed_u3d_in_pdf",
-    "mesh_to_pdf",
     "convert_3d_file",
     "cli_main",
 ]
