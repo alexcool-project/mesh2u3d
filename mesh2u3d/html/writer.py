@@ -44,6 +44,7 @@ _VIEWER_LABELS = {
         "vertex_short": "Vertici",
         "triangle_short": "Triangoli",
         "format_short": "Formato",
+        "file_label": "File",
         "controls_title": "🎛️ Controlli",
         "opacity_label": "Opacità",
         "display_label": "Visualizzazione",
@@ -73,6 +74,7 @@ _VIEWER_LABELS = {
         "vertex_short": "Vertices",
         "triangle_short": "Triangles",
         "format_short": "Format",
+        "file_label": "File",
         "controls_title": "🎛️ Controls",
         "opacity_label": "Opacity",
         "display_label": "Display",
@@ -646,6 +648,7 @@ import {{ OrbitControls }} from 'three/addons/controls/OrbitControls.js';
 const MESH_DATA = {mesh_json};
 const PROJECT_TITLE = "{title}";
 const STATS = {{
+  file_label: "{file_label}",
   vertex_short: "{vertex_short}",
   vertex_count: "{vertex_count}",
   triangle_short: "{triangle_short}",
@@ -930,42 +933,35 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     // Disegna il canvas WebGL
     ctx.drawImage(canvas, 0, 0);
 
-    // Aggiungi watermark con dati del file (in alto a sinistra)
+    // --- Watermark con righe uniformi (label / value) ---
     const fontSize = Math.max(16, Math.floor(compositeCanvas.width / 60));
-    const smallFontSize = Math.floor(fontSize * 0.75);
-    const padding = fontSize * 1.2;
+    const smallFontSize = Math.floor(fontSize * 0.8);
+    const padding = fontSize * 1.5;
     let currentY = padding;
 
-    // --- Nome progetto (blu) ---
-    ctx.font = `bold ${{fontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.fillStyle = 'rgba(74, 158, 255, 0.95)';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(PROJECT_TITLE, padding, currentY);
-
-    // --- Righe statistiche ---
-    currentY += fontSize * 1.8;
-
-    const stats = [
+    // Tutte le righe nello stesso formato: label a sinistra, valore a destra
+    const rows = [
+        {{ label: STATS.file_label, value: PROJECT_TITLE }},
         {{ label: STATS.vertex_short, value: STATS.vertex_count }},
         {{ label: STATS.triangle_short, value: STATS.triangle_count }},
         {{ label: STATS.format_short, value: STATS.source_format }}
     ];
 
     ctx.font = `${{smallFontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textBaseline = 'top';
 
-    const valueRightEdge = padding + fontSize * 7;
+    const valueRightEdge = padding + smallFontSize * 8;
 
-    for (const stat of stats) {{
+    for (const row of rows) {{
         // Label (grigio)
         ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
         ctx.textAlign = 'left';
-        ctx.fillText(stat.label, padding, currentY);
+        ctx.fillText(row.label, padding, currentY);
 
         // Value (bianco) - allineato a destra
         ctx.fillStyle = 'rgba(230, 237, 243, 0.95)';
         ctx.textAlign = 'right';
-        ctx.fillText(stat.value, valueRightEdge, currentY);
+        ctx.fillText(row.value, valueRightEdge, currentY);
         ctx.textAlign = 'left';
 
         currentY += smallFontSize * 1.6;
@@ -1100,6 +1096,7 @@ def mesh_to_html(
         logo_url=_ARTIFIX_LOGO_URL,
         mesh_json=_mesh_to_json(mesh),
         loading_text=labels["loading"],
+        file_label=labels["file_label"],
         vertex_short=labels["vertex_short"],
         triangle_short=labels["triangle_short"],
         format_short=labels["format_short"],
