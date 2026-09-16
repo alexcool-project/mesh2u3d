@@ -4,7 +4,7 @@ mesh2u3d — Libreria Python per convertire mesh 3D in U3D, HTML 3D e PDF 3D.
 API pubblica di alto livello:
     - MeshReader / MeshData
     - U3DWriter / mesh_to_u3d / meshes_to_u3d
-    - mesh_to_html / meshes_to_html
+    - mesh_to_html
     - mesh_to_pdf / embed_u3d_in_pdf
     - convert_3d_file (universale, multi-formato)
 
@@ -28,7 +28,7 @@ from .u3d.writer import U3DWriter, mesh_to_u3d, meshes_to_u3d
 from .u3d.validator import validate_u3d, U3DValidationReport
 
 # --- HTML: viewer three.js self-contained (IT/EN) ---
-from .html.writer import mesh_to_html, meshes_to_html
+from .html.writer import mesh_to_html
 
 # --- PDF: embed U3D in PDF 1.7 ---
 from .pdf.embedder import embed_u3d_in_pdf, mesh_to_pdf
@@ -52,7 +52,6 @@ __all__ = [
     "validate_u3d",
     "U3DValidationReport",
     "mesh_to_html",
-    "meshes_to_html",
     "embed_u3d_in_pdf",
     "mesh_to_pdf",
     "convert_3d_file",
