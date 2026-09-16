@@ -41,10 +41,10 @@ _ARTIFIX_LOGO_URL = (
 _VIEWER_LABELS = {
     "it": {
         "loading": "Caricamento modello 3D...",
+        "file_label": "File",
         "vertex_short": "Vertici",
         "triangle_short": "Triangoli",
         "format_short": "Formato",
-        "file_label": "File",
         "controls_title": "🎛️ Controlli",
         "opacity_label": "Opacità",
         "display_label": "Visualizzazione",
@@ -71,10 +71,10 @@ _VIEWER_LABELS = {
     },
     "en": {
         "loading": "Loading 3D model...",
+        "file_label": "File",
         "vertex_short": "Vertices",
         "triangle_short": "Triangles",
         "format_short": "Format",
-        "file_label": "File",
         "controls_title": "🎛️ Controls",
         "opacity_label": "Opacity",
         "display_label": "Display",
@@ -208,21 +208,22 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     line-height: 1.6;
     z-index: 5;
     min-width: 220px;
-  }}
-  #info .project-name {{
-    font-weight: 600;
-    font-size: 15px;
-    color: #4a9eff;
-    margin-bottom: 8px;
+    max-width: 320px;
   }}
   #info .stat {{
     display: flex;
     justify-content: space-between;
+    gap: 12px;
     color: #8b949e;
   }}
   #info .stat .value {{
     color: #e6edf3;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+    text-align: right;
   }}
 
   #controls {{
@@ -346,15 +347,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     max-width: 55%;
     pointer-events: none;
   }}
-  #info-mobile .name {{
-    font-size: 14px;
-    font-weight: 600;
-    color: #4a9eff;
-    margin-bottom: 6px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }}
   #info-mobile .stat {{
     display: flex;
     justify-content: space-between;
@@ -363,6 +355,11 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   #info-mobile .stat .value {{
     color: #e6edf3;
     font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+    text-align: right;
   }}
 
   #controls-toggle {{
@@ -554,14 +551,14 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 </div>
 
 <div id="info">
-  <div class="project-name">{title}</div>
+  <div class="stat"><span>{file_label}</span><span class="value">{title}</span></div>
   <div class="stat"><span>{vertex_short}</span><span class="value">{vertex_count}</span></div>
   <div class="stat"><span>{triangle_short}</span><span class="value">{triangle_count}</span></div>
   <div class="stat"><span>{format_short}</span><span class="value">{source_format}</span></div>
 </div>
 
 <div id="info-mobile">
-  <div class="name">{title}</div>
+  <div class="stat"><span>{file_label}</span><span class="value">{title}</span></div>
   <div class="stat"><span>{vertex_short}</span><span class="value">{vertex_count}</span></div>
   <div class="stat"><span>{triangle_short}</span><span class="value">{triangle_count}</span></div>
   <div class="stat"><span>{format_short}</span><span class="value">{source_format}</span></div>
