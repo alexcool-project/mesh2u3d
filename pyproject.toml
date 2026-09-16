@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mesh2u3d"
-version = "0.1.0"
-description = "Convert 3D meshes to U3D (ECMA-363) and embed them into PDF files"
+version = "0.2.0"
+description = "Convert 3D meshes to U3D (ECMA-363), HTML 3D (three.js) and PDF with embedded 3D"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "alexcool-project", email = "info@artifix.it" }]
 requires-python = ">=3.10"
-keywords = ["3d", "u3d", "pdf", "mesh", "cad", "ecma-363"]
+keywords = ["3d", "u3d", "pdf", "mesh", "cad", "ecma-363", "three.js", "converter", "cli"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
