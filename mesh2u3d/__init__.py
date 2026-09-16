@@ -1,59 +1,60 @@
 """
-mesh2u3d — Convert 3D meshes to U3D (ECMA-363), HTML 3D, and PDF.
+mesh2u3d — Libreria Python per convertire mesh 3D in U3D, HTML 3D e PDF 3D.
 
-Libreria Python open source (MIT) per la conversione di mesh 3D in:
-  - U3D (ECMA-363)
-  - HTML 3D (three.js, self-contained)
-  - PDF con U3D embedded
-  - PRC (ISO 14739-1) [roadmap]
+API pubblica di alto livello:
+    - MeshReader / MeshData
+    - U3DWriter / mesh_to_u3d / meshes_to_u3d
+    - mesh_to_html / meshes_to_html
+    - mesh_to_pdf / embed_u3d_in_pdf
+    - convert_3d_file (universale, multi-formato)
 
-Autore: alexcool-project
+Supporto bilingue IT/EN per il viewer HTML.
+
+Versione: 0.2.0
 Licenza: MIT
-Repository: https://github.com/alexcool-project/mesh2u3d
 """
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "alexcool-project"
 __license__ = "MIT"
 
-# --- IO: Lettura mesh ---
-from .io.mesh_reader import MeshData, MeshReader
+# --- IO: lettura mesh universale ---
+from .io.mesh_reader import MeshReader, MeshData
 
-# --- U3D: Writer + Validator ---
-from .u3d.writer import mesh_to_u3d, meshes_to_u3d
-from .u3d.validator import validate_u3d, ValidationReport
+# --- U3D: scrittura e validazione ECMA-363 ---
+from .u3d.writer import U3DWriter, mesh_to_u3d, meshes_to_u3d
+from .u3d.validator import validate_u3d, U3DValidationReport
 
-# --- HTML: Viewer ---
-from .html.writer import mesh_to_html
+# --- HTML: viewer three.js self-contained (IT/EN) ---
+from .html.writer import mesh_to_html, meshes_to_html
 
-# --- PDF: Embedder ---
+# --- PDF: embed U3D in PDF 1.7 ---
 from .pdf.embedder import embed_u3d_in_pdf, mesh_to_pdf
 
-# --- Converter: API di alto livello (Fase 1) ---
-from .converter.convert import convert_3d_file, convert_batch
+# --- Converter universale (NOVITÀ v0.2.0) ---
+from .converter import convert_3d_file
 
-# --- API pubblica ---
+# --- CLI (NOVITÀ v0.2.0) ---
+from .cli import main as cli_main
+
+
 __all__ = [
-    # Versione
     "__version__",
     "__author__",
     "__license__",
-    # IO
-    "MeshData",
     "MeshReader",
-    # U3D
+    "MeshData",
+    "U3DWriter",
     "mesh_to_u3d",
     "meshes_to_u3d",
     "validate_u3d",
-    "ValidationReport",
-    # HTML
+    "U3DValidationReport",
     "mesh_to_html",
-    # PDF
+    "meshes_to_html",
     "embed_u3d_in_pdf",
     "mesh_to_pdf",
-    # Converter (Fase 1)
     "convert_3d_file",
-    "convert_batch",
+    "cli_main",
 ]
