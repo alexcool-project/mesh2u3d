@@ -33,7 +33,7 @@ class BlockInfo:
 
 
 @dataclass
-class ValidationReport:
+class U3DValidationReport:
     path: Path
     file_size: int
     magic: bytes
@@ -100,13 +100,13 @@ def _block_type_name(bt: int) -> str:
         return f"UNKNOWN(0x{bt:08X})"
 
 
-def validate_u3d(path: str | Path) -> ValidationReport:
+def validate_u3d(path: str | Path) -> U3DValidationReport:
     """Legge e valida un file U3D. Non solleva eccezioni: accumula errori."""
     path = Path(path)
     data = path.read_bytes()
     size = len(data)
 
-    report = ValidationReport(
+    report = U3DValidationReport(
         path=path,
         file_size=size,
         magic=b"",
