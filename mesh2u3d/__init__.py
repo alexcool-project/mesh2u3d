@@ -1,10 +1,11 @@
 """
-mesh2u3d — Libreria Python per convertire mesh 3D in U3D, HTML 3D e PDF 3D.
+mesh2u3d — Libreria Python per convertire mesh 3D in U3D, HTML 3D, PRC e PDF 3D.
 
 API pubblica di alto livello:
     - MeshReader / MeshData
     - U3DWriter / mesh_to_u3d / meshes_to_u3d
     - mesh_to_html
+    - PRCWriter / mesh_to_prc
     - embed_u3d_in_pdf
     - convert_3d_file (universale, multi-formato)
 
@@ -27,6 +28,9 @@ from .io.mesh_reader import MeshReader, MeshData
 from .u3d.writer import U3DWriter, mesh_to_u3d, meshes_to_u3d
 from .u3d.validator import validate_u3d, U3DValidationReport
 
+# --- PRC: scrittura ISO 14739-1 (NOVITÀ v0.2.0) ---
+from .prc.writer import PRCWriter, mesh_to_prc, PRCError
+
 # --- HTML: viewer three.js self-contained (IT/EN) ---
 from .html.writer import mesh_to_html
 
@@ -44,15 +48,25 @@ __all__ = [
     "__version__",
     "__author__",
     "__license__",
+    # IO
     "MeshReader",
     "MeshData",
+    # U3D
     "U3DWriter",
     "mesh_to_u3d",
     "meshes_to_u3d",
     "validate_u3d",
     "U3DValidationReport",
+    # PRC
+    "PRCWriter",
+    "mesh_to_prc",
+    "PRCError",
+    # HTML
     "mesh_to_html",
+    # PDF
     "embed_u3d_in_pdf",
+    # Converter
     "convert_3d_file",
+    # CLI
     "cli_main",
 ]
