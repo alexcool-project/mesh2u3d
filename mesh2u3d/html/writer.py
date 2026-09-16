@@ -8,6 +8,8 @@ Produce un singolo file .html che contiene:
   - Pannello info progetto (desktop + mobile compatto)
   - Logo cubo ArtiFix in alto a destra (link al sito)
   - Controlli interattivi responsive (pannello modale su mobile)
+  - Pulsante "Scatta foto" (screenshot professionale)
+  - Pulsante "Scarica HTML" (per uso offline)
 
 Supporta due lingue: IT (default) e EN.
 
@@ -57,6 +59,14 @@ _VIEWER_LABELS = {
         "btn_solid": "Solido",
         "btn_flat": "Flat",
         "btn_xray": "X-Ray",
+        # --- NUOVI PULSANTI ---
+        "btn_screenshot": "📸 Scatta foto",
+        "btn_screenshot_title": "Salva uno screenshot professionale del modello",
+        "btn_download_html": "💾 Scarica HTML",
+        "btn_download_html_title": "Salva il file HTML per aprirlo offline",
+        "screenshot_success": "✅ Screenshot salvato!",
+        "screenshot_error": "❌ Errore durante lo screenshot",
+        "download_success": "✅ File HTML scaricato!",
     },
     "en": {
         "loading": "Loading 3D model...",
@@ -78,6 +88,14 @@ _VIEWER_LABELS = {
         "btn_solid": "Solid",
         "btn_flat": "Flat",
         "btn_xray": "X-Ray",
+        # --- NEW BUTTONS ---
+        "btn_screenshot": "📸 Take screenshot",
+        "btn_screenshot_title": "Save a professional screenshot of the model",
+        "btn_download_html": "💾 Download HTML",
+        "btn_download_html_title": "Save the HTML file to open it offline",
+        "screenshot_success": "✅ Screenshot saved!",
+        "screenshot_error": "❌ Screenshot error",
+        "download_success": "✅ HTML file downloaded!",
     },
 }
 
@@ -126,9 +144,57 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     filter: drop-shadow(0 2px 8px rgba(74, 158, 255, 0.25));
   }}
 
-  #info {{
+  /* --- ACTION BUTTONS (screenshot + download HTML) --- */
+  #action-buttons {{
     position: absolute;
     top: 16px;
+    left: 16px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: auto;
+  }}
+  .action-btn {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: rgba(13,17,23,0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    color: #e6edf3;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    font-family: inherit;
+  }}
+  .action-btn:hover {{
+    background: #21262d;
+    border-color: #4a9eff;
+    transform: translateY(-1px);
+  }}
+  .action-btn:active {{
+    transform: translateY(0);
+  }}
+  .action-btn.success {{
+    background: #1f4a2e;
+    border-color: #2ecc71;
+    color: #2ecc71;
+  }}
+  .action-btn.error {{
+    background: #4a1f1f;
+    border-color: #e74c3c;
+    color: #e74c3c;
+  }}
+
+  #info {{
+    position: absolute;
+    top: 130px;
     left: 16px;
     background: rgba(13,17,23,0.85);
     backdrop-filter: blur(10px);
@@ -159,7 +225,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 
   #controls {{
     position: absolute;
-    top: 88px;
+    top: 200px;
     right: 16px;
     background: rgba(13,17,23,0.85);
     backdrop-filter: blur(10px);
@@ -263,7 +329,7 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   #info-mobile {{
     display: none;
     position: absolute;
-    top: 14px;
+    top: 100px;
     left: 14px;
     background: rgba(13,17,23,0.9);
     backdrop-filter: blur(10px);
@@ -420,6 +486,17 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     #artifix-logo img {{ width: 42px; height: 42px; }}
     #artifix-logo {{ top: 12px; right: 12px; }}
 
+    #action-buttons {{
+      top: 12px;
+      left: 12px;
+      flex-direction: row;
+      gap: 6px;
+    }}
+    .action-btn {{
+      padding: 8px 10px;
+      font-size: 12px;
+    }}
+
     #reset-btn {{
       bottom: 24px;
       right: 90px;
@@ -464,6 +541,15 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <a id="artifix-logo" href="https://www.artifix.it" target="_blank" rel="noopener" title="{logo_title}">
   <img src="{logo_url}" alt="ArtiFix">
 </a>
+
+<div id="action-buttons">
+  <button class="action-btn" id="btn-screenshot" title="{btn_screenshot_title}">
+    {btn_screenshot}
+  </button>
+  <button class="action-btn" id="btn-download-html" title="{btn_download_html_title}">
+    {btn_download_html}
+  </button>
+</div>
 
 <div id="info">
   <div class="project-name">{title}</div>
@@ -542,6 +628,8 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <span>✋ <b>{hints_pan}</b></span>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script type="importmap">
 {{
   "imports": {{
@@ -556,6 +644,7 @@ import * as THREE from 'three';
 import {{ OrbitControls }} from 'three/addons/controls/OrbitControls.js';
 
 const MESH_DATA = {mesh_json};
+const PROJECT_TITLE = "{title}";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d1117);
@@ -567,7 +656,7 @@ const camera = new THREE.PerspectiveCamera(
   10000
 );
 
-const renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: false }});
+const renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: false, preserveDrawingBuffer: true }});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -815,6 +904,113 @@ renderer.domElement.addEventListener('dblclick', () => {{
     document.exitFullscreen();
   }}
 }});
+
+// ---------- SCREENSHOT BUTTON ----------
+document.getElementById('btn-screenshot').addEventListener('click', async function() {{
+  const btn = this;
+  const originalText = btn.textContent;
+
+  try {{
+    // Cattura solo il canvas WebGL (renderer.domElement)
+    // Aggiungiamo un watermark testuale in alto a sinistra con logo + data + nome progetto
+    const canvas = renderer.domElement;
+
+    // Crea un canvas composito
+    const compositeCanvas = document.createElement('canvas');
+    compositeCanvas.width = canvas.width;
+    compositeCanvas.height = canvas.height;
+    const ctx = compositeCanvas.getContext('2d');
+
+    // Disegna il canvas WebGL
+    ctx.drawImage(canvas, 0, 0);
+
+    // Aggiungi watermark
+    const fontSize = Math.max(14, Math.floor(compositeCanvas.width / 80));
+    ctx.font = `bold ${{fontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillStyle = 'rgba(74, 158, 255, 0.85)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const padding = fontSize;
+    const today = new Date().toISOString().split('T')[0];
+
+    // Nome progetto
+    ctx.fillText(PROJECT_TITLE, padding, padding);
+
+    // Data + www.artifix.it
+    ctx.font = `${{Math.floor(fontSize * 0.8)}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
+    ctx.fillText(`${{today}} — www.artifix.it`, padding, padding + fontSize * 1.5);
+
+    // Genera il blob PNG
+    const dataUrl = compositeCanvas.toDataURL('image/png');
+
+    // Crea il download
+    const link = document.createElement('a');
+    const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `${{safeTitle}}_${{today}}.png`;
+    link.href = dataUrl;
+    link.click();
+
+    btn.classList.add('success');
+    btn.textContent = '{screenshot_success}';
+    setTimeout(() => {{
+      btn.classList.remove('success');
+      btn.textContent = originalText;
+    }}, 2000);
+
+  }} catch (err) {{
+    console.error('Screenshot error:', err);
+    btn.classList.add('error');
+    btn.textContent = '{screenshot_error}';
+    setTimeout(() => {{
+      btn.classList.remove('error');
+      btn.textContent = originalText;
+    }}, 2000);
+  }}
+}});
+
+// ---------- DOWNLOAD HTML BUTTON ----------
+document.getElementById('btn-download-html').addEventListener('click', function() {{
+  const btn = this;
+  const originalText = btn.textContent;
+
+  try {{
+    // Recupera il sorgente HTML della pagina corrente
+    const htmlSource = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
+
+    // Crea il blob
+    const blob = new Blob([htmlSource], {{ type: 'text/html;charset=utf-8' }});
+    const url = URL.createObjectURL(blob);
+
+    // Crea il download
+    const link = document.createElement('a');
+    const today = new Date().toISOString().split('T')[0];
+    const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
+    link.download = `${{safeTitle}}_${{today}}.html`;
+    link.href = url;
+    link.click();
+
+    // Cleanup
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    btn.classList.add('success');
+    btn.textContent = '{download_success}';
+    setTimeout(() => {{
+      btn.classList.remove('success');
+      btn.textContent = originalText;
+    }}, 2000);
+
+  }} catch (err) {{
+    console.error('Download error:', err);
+    btn.classList.add('error');
+    btn.textContent = '{screenshot_error}';
+    setTimeout(() => {{
+      btn.classList.remove('error');
+      btn.textContent = originalText;
+    }}, 2000);
+  }}
+}});
 </script>
 </body>
 </html>
@@ -892,6 +1088,14 @@ def mesh_to_html(
         btn_solid=labels["btn_solid"],
         btn_flat=labels["btn_flat"],
         btn_xray=labels["btn_xray"],
+        # --- NUOVE STRINGHE ---
+        btn_screenshot=labels["btn_screenshot"],
+        btn_screenshot_title=labels["btn_screenshot_title"],
+        btn_download_html=labels["btn_download_html"],
+        btn_download_html_title=labels["btn_download_html_title"],
+        screenshot_success=labels["screenshot_success"],
+        screenshot_error=labels["screenshot_error"],
+        download_success=labels["download_success"],
     )
 
     output.write_text(html, encoding="utf-8")
