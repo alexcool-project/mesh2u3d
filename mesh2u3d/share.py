@@ -16,6 +16,8 @@ Utilizzo:
         title="Tavolo di Mario"
     )
     print(f"Link: {url}")
+
+Dominio pubblico: viewer.artifix.it
 """
 from __future__ import annotations
 
@@ -28,6 +30,10 @@ from typing import Optional
 
 
 # ---------- Configurazione ----------
+
+# Dominio pubblico per i link condivisibili (CNAME → GitHub Pages)
+PUBLIC_BASE_URL = "https://viewer.artifix.it"
+
 
 def _load_credentials() -> dict:
     """
@@ -160,8 +166,8 @@ def _upload_to_github(
             branch=creds["branch"],
         )
 
-    # URL pubblico (GitHub Pages)
-    url = f"https://{creds['username']}.github.io/{creds['repo']}/v/{viewer_id}.html"
+    # URL pubblico (dominio custom viewer.artifix.it)
+    url = f"{PUBLIC_BASE_URL}/v/{viewer_id}.html"
     return url
 
 
