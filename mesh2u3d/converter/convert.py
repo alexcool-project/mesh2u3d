@@ -3,7 +3,7 @@ Converter universale per mesh 3D.
 
 Fornisce una singola funzione `convert_3d_file()` che:
     - Legge qualsiasi formato mesh supportato da MeshReader
-    - Scrive qualsiasi formato di output supportato (U3D, HTML, PDF)
+    - Scrive qualsiasi formato di output supportato (U3D, PRC, HTML, PDF)
     - Supporta batch processing (lista di file)
 
 Architettura sinergica (Fase 1 + 2 + 3):
@@ -24,8 +24,9 @@ from typing import Any, Iterable
 
 from ..io.mesh_reader import MeshReader, MeshData
 from ..u3d.writer import mesh_to_u3d
+from ..prc.writer import mesh_to_prc
 from ..html.writer import mesh_to_html
-from ..pdf.embedder import embed_u3d_in_pdf
+from ..pdf.embedder import embed_u3d_in_pdf, embed_prc_in_pdf
 
 
 # --- Formati supportati ---
@@ -35,7 +36,7 @@ SUPPORTED_INPUT_FORMATS: set[str] = {
 }
 
 SUPPORTED_OUTPUT_FORMATS: set[str] = {
-    "u3d", "html", "pdf",
+    "u3d", "prc", "html", "pdf", "pdf_prc",
 }
 
 
@@ -127,7 +128,7 @@ def convert_3d_file(
     input_path : str | Path
         Percorso del file di input (STL, OBJ, PLY, GLB, GLTF, OFF, DAE, 3MF, FBX).
     output_path : str | Path
-        Percorso del file di output (U3D, HTML, PDF).
+        Percorso del file di output (U3D, PRC, HTML, PDF).
     preserve_textures : bool, default False
         [FASE 2] Preserva texture e materiali PBR (per GLB/GLTF).
     batch : bool, default False
@@ -152,6 +153,7 @@ def convert_3d_file(
     --------
     >>> from mesh2u3d import convert_3d_file
     >>> result = convert_3d_file("cube.stl", "cube.u3d")
+    >>> result = convert_3d_file("cube.stl", "cube.prc")
     >>> result = convert_3d_file("model.glb", "model.html", preserve_textures=True)
     """
     # Fase 3: modalità batch
@@ -180,6 +182,8 @@ def convert_3d_file(
 
         if out_ext == "u3d":
             mesh_to_u3d(mesh, str(out_p))
+        elif out_ext == "prc":
+            mesh_to_prc(mesh, str(out_p))
         elif out_ext == "html":
             mesh_to_html(
                 mesh,
@@ -189,6 +193,7 @@ def convert_3d_file(
                 lang=lang,
             )
         elif out_ext == "pdf":
+            # Genera U3D temporaneo, poi embed nel PDF
             with tempfile.NamedTemporaryFile(suffix=".u3d", delete=False) as tmp:
                 tmp_u3d = Path(tmp.name)
             try:
@@ -201,6 +206,22 @@ def convert_3d_file(
             finally:
                 try:
                     tmp_u3d.unlink()
+                except OSError:
+                    pass
+        elif out_ext == "pdf_prc":
+            # Genera PRC temporaneo, poi embed nel PDF (compatibilità Adobe!)
+            with tempfile.NamedTemporaryFile(suffix=".prc", delete=False) as tmp:
+                tmp_prc = Path(tmp.name)
+            try:
+                mesh_to_prc(mesh, str(tmp_prc))
+                embed_prc_in_pdf(
+                    tmp_prc,
+                    out_p,
+                    title=title or mesh.name,
+                )
+            finally:
+                try:
+                    tmp_prc.unlink()
                 except OSError:
                     pass
         else:
