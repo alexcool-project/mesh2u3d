@@ -1,4 +1,14 @@
-"""Incorpora uno stream U3D in un PDF 1.7 come annotazione 3D."""
+"""
+Incorpora stream U3D o PRC in un PDF 1.7 come annotazione 3D.
+
+Supporta due formati:
+    - U3D (ECMA-363) — supportato da Foxit, PDF-XChange, ecc.
+    - PRC (ISO 14739-1) — supportato nativamente da Adobe Acrobat/Reader
+
+Autore: alexcool-project
+Licenza: MIT
+"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,27 +23,63 @@ from pypdf.generic import (
 )
 
 
-def _add_u3d_stream(writer: PdfWriter, u3d_bytes: bytes) -> DictionaryObject:
-    """Crea stream PDF /EmbeddedFile con subtype /U3D."""
+# --- Stream embedded file ---
+
+def _add_embedded_stream(
+    writer: PdfWriter,
+    data: bytes,
+    subtype: str,
+) -> DictionaryObject:
+    """
+    Crea stream PDF /EmbeddedFile con subtype /U3D o /PRC.
+
+    Parameters
+    ----------
+    writer : PdfWriter
+        Writer PDF a cui aggiungere lo stream.
+    data : bytes
+        Contenuto binario (U3D o PRC).
+    subtype : str
+        Sottotipo: "U3D" o "PRC".
+    """
     stream = DecodedStreamObject()
-    stream.set_data(u3d_bytes)
+    stream.set_data(data)
     stream.update({
         NameObject("/Type"): NameObject("/EmbeddedFile"),
-        NameObject("/Subtype"): NameObject("/U3D"),
+        NameObject("/Subtype"): NameObject(f"/{subtype}"),
     })
     return writer._add_object(stream)
 
 
-def _add_3d_dict(writer: PdfWriter, stream_ref: DictionaryObject) -> DictionaryObject:
-    """Dizionario /3D che referenzia lo stream U3D."""
+# --- Dizionario /3D ---
+
+def _add_3d_dict(
+    writer: PdfWriter,
+    stream_ref: DictionaryObject,
+    subtype: str = "U3D",
+) -> DictionaryObject:
+    """
+    Dizionario /3D che referenzia lo stream U3D o PRC.
+
+    Parameters
+    ----------
+    writer : PdfWriter
+        Writer PDF.
+    stream_ref : DictionaryObject
+        Riferimento allo stream embedded.
+    subtype : str
+        Sottotipo: "U3D" o "PRC".
+    """
     d = DictionaryObject()
     d.update({
         NameObject("/Type"): NameObject("/3D"),
-        NameObject("/Subtype"): NameObject("/U3D"),
+        NameObject("/Subtype"): NameObject(f"/{subtype}"),
         NameObject("/Stream"): stream_ref,
     })
     return writer._add_object(d)
 
+
+# --- Annotazione 3D ---
 
 def _add_3d_annotation(
     writer: PdfWriter,
@@ -59,6 +105,8 @@ def _add_3d_annotation(
     page[NameObject("/Annots")].append(annot_ref)
 
 
+# --- API U3D ---
+
 def embed_u3d_in_pdf(
     u3d_path: str | Path,
     pdf_output: str | Path,
@@ -68,7 +116,7 @@ def embed_u3d_in_pdf(
     title: str = "3D Model",
 ) -> Path:
     """
-    Crea un PDF 1.7 con annotazione 3D incorporata.
+    Crea un PDF 1.7 con annotazione 3D incorporata (U3D).
 
     Parameters
     ----------
@@ -81,7 +129,6 @@ def embed_u3d_in_pdf(
     u3d_bytes = Path(u3d_path).read_bytes()
 
     writer = PdfWriter()
-    # Forza PDF 1.7 (richiesto per annotazioni 3D)
     writer.pdf_header = b"%PDF-1.7"
 
     if pdf_base:
@@ -91,8 +138,8 @@ def embed_u3d_in_pdf(
     else:
         writer.add_blank_page(width=595, height=842)  # A4
 
-    stream_ref = _add_u3d_stream(writer, u3d_bytes)
-    ddd_ref = _add_3d_dict(writer, stream_ref)
+    stream_ref = _add_embedded_stream(writer, u3d_bytes, subtype="U3D")
+    ddd_ref = _add_3d_dict(writer, stream_ref, subtype="U3D")
     _add_3d_annotation(writer, writer.pages[0], ddd_ref, rect)
 
     writer.add_metadata({
@@ -105,3 +152,61 @@ def embed_u3d_in_pdf(
         writer.write(f)
 
     return Path(pdf_output)
+
+
+# --- API PRC (NOVITÀ v0.2.0) ---
+
+def embed_prc_in_pdf(
+    prc_path: str | Path,
+    pdf_output: str | Path,
+    *,
+    pdf_base: str | Path | None = None,
+    rect: tuple[float, float, float, float] = (50.0, 400.0, 545.0, 800.0),
+    title: str = "3D Model",
+) -> Path:
+    """
+    Crea un PDF 1.7 con annotazione 3D incorporata (PRC).
+
+    PRC è supportato nativamente da Adobe Acrobat/Reader.
+    Questo è il metodo consigliato per la massima compatibilità.
+
+    Parameters
+    ----------
+    prc_path : percorso al file .prc
+    pdf_output : percorso PDF risultante
+    pdf_base : PDF esistente (opzionale) a cui aggiungere l'annotazione
+    rect : bounding box dell'annotazione (punti PDF)
+    title : titolo del PDF
+    """
+    prc_bytes = Path(prc_path).read_bytes()
+
+    writer = PdfWriter()
+    writer.pdf_header = b"%PDF-1.7"
+
+    if pdf_base:
+        reader = PdfReader(str(pdf_base))
+        for page in reader.pages:
+            writer.add_page(page)
+    else:
+        writer.add_blank_page(width=595, height=842)  # A4
+
+    stream_ref = _add_embedded_stream(writer, prc_bytes, subtype="PRC")
+    ddd_ref = _add_3d_dict(writer, stream_ref, subtype="PRC")
+    _add_3d_annotation(writer, writer.pages[0], ddd_ref, rect)
+
+    writer.add_metadata({
+        "/Title": title,
+        "/Creator": "mesh2u3d",
+        "/Producer": "mesh2u3d",
+    })
+
+    with open(pdf_output, "wb") as f:
+        writer.write(f)
+
+    return Path(pdf_output)
+
+
+__all__ = [
+    "embed_u3d_in_pdf",
+    "embed_prc_in_pdf",
+]
