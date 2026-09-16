@@ -8,7 +8,7 @@ Produce un singolo file .html che contiene:
   - Pannello info progetto (desktop + mobile compatto)
   - Logo cubo ArtiFix in alto a destra (link al sito)
   - Controlli interattivi responsive (pannello modale su mobile)
-  - Pulsante "Scatta foto" (screenshot professionale)
+  - Pulsante "Scatta foto" (screenshot professionale con dati file)
   - Pulsante "Scarica HTML" (per uso offline)
 
 Supporta due lingue: IT (default) e EN.
@@ -645,6 +645,14 @@ import {{ OrbitControls }} from 'three/addons/controls/OrbitControls.js';
 
 const MESH_DATA = {mesh_json};
 const PROJECT_TITLE = "{title}";
+const STATS = {{
+  vertex_short: "{vertex_short}",
+  vertex_count: "{vertex_count}",
+  triangle_short: "{triangle_short}",
+  triangle_count: "{triangle_count}",
+  format_short: "{format_short}",
+  source_format: "{source_format}"
+}};
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d1117);
@@ -911,8 +919,6 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
   const originalText = btn.textContent;
 
   try {{
-    // Cattura solo il canvas WebGL (renderer.domElement)
-    // Aggiungiamo un watermark testuale in alto a sinistra con logo + data + nome progetto
     const canvas = renderer.domElement;
 
     // Crea un canvas composito
@@ -924,23 +930,46 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     // Disegna il canvas WebGL
     ctx.drawImage(canvas, 0, 0);
 
-    // Aggiungi watermark
-    const fontSize = Math.max(14, Math.floor(compositeCanvas.width / 80));
+    // Aggiungi watermark con dati del file (in alto a sinistra)
+    const fontSize = Math.max(16, Math.floor(compositeCanvas.width / 60));
+    const smallFontSize = Math.floor(fontSize * 0.75);
+    const padding = fontSize * 1.2;
+    let currentY = padding;
+
+    // --- Nome progetto (blu) ---
     ctx.font = `bold ${{fontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.fillStyle = 'rgba(74, 158, 255, 0.85)';
+    ctx.fillStyle = 'rgba(74, 158, 255, 0.95)';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
+    ctx.fillText(PROJECT_TITLE, padding, currentY);
 
-    const padding = fontSize;
-    const today = new Date().toISOString().split('T')[0];
+    // --- Righe statistiche ---
+    currentY += fontSize * 1.8;
 
-    // Nome progetto
-    ctx.fillText(PROJECT_TITLE, padding, padding);
+    const stats = [
+        {{ label: STATS.vertex_short, value: STATS.vertex_count }},
+        {{ label: STATS.triangle_short, value: STATS.triangle_count }},
+        {{ label: STATS.format_short, value: STATS.source_format }}
+    ];
 
-    // Data + www.artifix.it
-    ctx.font = `${{Math.floor(fontSize * 0.8)}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
-    ctx.fillText(`${{today}} — www.artifix.it`, padding, padding + fontSize * 1.5);
+    ctx.font = `${{smallFontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+
+    const valueRightEdge = padding + fontSize * 7;
+
+    for (const stat of stats) {{
+        // Label (grigio)
+        ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
+        ctx.textAlign = 'left';
+        ctx.fillText(stat.label, padding, currentY);
+
+        // Value (bianco) - allineato a destra
+        ctx.fillStyle = 'rgba(230, 237, 243, 0.95)';
+        ctx.textAlign = 'right';
+        ctx.fillText(stat.value, valueRightEdge, currentY);
+        ctx.textAlign = 'left';
+
+        currentY += smallFontSize * 1.6;
+    }}
 
     // Genera il blob PNG
     const dataUrl = compositeCanvas.toDataURL('image/png');
@@ -948,6 +977,7 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     // Crea il download
     const link = document.createElement('a');
     const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const today = new Date().toISOString().split('T')[0];
     link.download = `${{safeTitle}}_${{today}}.png`;
     link.href = dataUrl;
     link.click();
