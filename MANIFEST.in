@@ -1,0 +1,25 @@
+# MANIFEST.in — include dati non-Python nel package sdist/wheel
+#
+# Senza questo file gli asset JS (three.js, OrbitControls) NON vengono
+# inclusi quando mesh2u3d viene installato via pip da git.
+# Questo causa errori tipo:
+#   FileNotFoundError: .../mesh2u3d/html/assets/three.min.js
+#
+# Vedi: https://setuptools.pypa.io/en/latest/userguide/miscellaneous.html
+
+include LICENSE
+include README.md
+include pyproject.toml
+
+# Asset JS inlineati nel viewer HTML offline
+recursive-include mesh2u3d/html/assets *.js
+
+# Eventuali immagini/icone future
+recursive-include mesh2u3d/html/assets *.png
+recursive-include mesh2u3d/html/assets *.svg
+recursive-include mesh2u3d/html/assets *.ico
+
+# Escludi file spazzatura
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store
