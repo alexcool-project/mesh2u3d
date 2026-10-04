@@ -24,34 +24,42 @@ classifiers = [
 dependencies = [
     "numpy>=1.24",
     "pypdf>=4.0",
-    "scipy>=1.11",
-    "trimesh>=4.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7",
-    "pytest-cov",
-    "ruff",
-    "mypy",
-    "build",
-    "twine",
+    "pytest>=7.0",
+    "ruff>=0.1.0",
 ]
+
+[project.scripts]
+mesh2u3d = "mesh2u3d.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/alexcool-project/mesh2u3d"
 Repository = "https://github.com/alexcool-project/mesh2u3d"
 Issues = "https://github.com/alexcool-project/mesh2u3d/issues"
 
-[project.scripts]
-mesh2u3d = "mesh2u3d.cli:main"
+# ---------------------------------------------------------------
+# SETUPTOOLS: inclusione dei file non-Python (asset JS, immagini)
+# ---------------------------------------------------------------
+# Queste 3 sezioni sono CRITICHE per il viewer offline: senza di
+# esse, gli asset JS (three.min.js, OrbitControls.min.js) non
+# vengono copiati dentro il wheel quando il package è installato
+# via pip da git (es. su Streamlit Cloud, Vercel, ecc.).
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
+where = ["."]
 include = ["mesh2u3d*"]
+exclude = ["examples*", "tests*", "docs*"]
 
-[tool.ruff]
-line-length = 100
-target-version = "py310"
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
+[tool.setuptools.package-data]
+"mesh2u3d.html" = [
+    "assets/*.js",
+    "assets/*.png",
+    "assets/*.svg",
+    "assets/*.ico",
+]
