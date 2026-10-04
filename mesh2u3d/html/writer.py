@@ -2,7 +2,8 @@
 Generatore HTML 3D self-contained con three.js — versione PRO.
 
 Produce un singolo file .html che contiene:
-  - three.js embedded (via CDN)
+  - three.js r147 UMD embedded (inline, no CDN)
+  - OrbitControls r147 UMD embedded (inline, no CDN)
   - La mesh serializzata come JSON inline
   - Controlli avanzati: rotazione, zoom, pan, trasparenza, wireframe
   - Pannello info progetto (desktop + mobile compatto)
@@ -13,8 +14,9 @@ Produce un singolo file .html che contiene:
 
 Supporta due lingue: IT (default) e EN.
 
-Il file risultante è APRIBBILE IN QUALSIASI BROWSER MODERNO
-senza installare nulla, senza account, senza Adobe.
+Il file risultante è APRIBILE IN QUALSIASI BROWSER MODERNO
+senza installare nulla, senza account, senza Adobe,
+E ANCHE OFFLINE (file://) perché tutte le librerie sono inline.
 
 Autore: alexcool-project
 Licenza: MIT
@@ -34,6 +36,14 @@ _ARTIFIX_LOGO_URL = (
     "https://raw.githubusercontent.com/alexcool-project/"
     "mesh2u3d-viewer/main/assets/ArchiFix_cubo-logo.png"
 )
+
+# Directory degli asset JS da inlineare
+_ASSETS_DIR = Path(__file__).parent / "assets"
+
+
+def _read_asset(name: str) -> str:
+    """Legge un file JS dagli assets e lo restituisce come stringa."""
+    return (_ASSETS_DIR / name).read_text(encoding="utf-8")
 
 
 # ---------- Stringhe multilingua per il viewer ----------
@@ -60,7 +70,6 @@ _VIEWER_LABELS = {
         "btn_solid": "Solido",
         "btn_flat": "Flat",
         "btn_xray": "X-Ray",
-        # --- NUOVI PULSANTI ---
         "btn_screenshot": "📸 Scatta foto",
         "btn_screenshot_title": "Salva uno screenshot professionale del modello",
         "btn_download_html": "💾 Scarica HTML",
@@ -90,7 +99,6 @@ _VIEWER_LABELS = {
         "btn_solid": "Solid",
         "btn_flat": "Flat",
         "btn_xray": "X-Ray",
-        # --- NEW BUTTONS ---
         "btn_screenshot": "📸 Take screenshot",
         "btn_screenshot_title": "Save a professional screenshot of the model",
         "btn_download_html": "💾 Download HTML",
@@ -146,7 +154,6 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     filter: drop-shadow(0 2px 8px rgba(74, 158, 255, 0.25));
   }}
 
-  /* --- ACTION BUTTONS (screenshot + download HTML) --- */
   #action-buttons {{
     position: absolute;
     top: 16px;
@@ -627,21 +634,12 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
   <span>✋ <b>{hints_pan}</b></span>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- three.js r147 UMD inline (no CDN, funziona offline) -->
+<script>{three_js}</script>
+<!-- OrbitControls r147 UMD inline (no CDN, funziona offline) -->
+<script>{orbit_js}</script>
 
-<script type="importmap">
-{{
-  "imports": {{
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-  }}
-}}
-</script>
-
-<script type="module">
-import * as THREE from 'three';
-import {{ OrbitControls }} from 'three/addons/controls/OrbitControls.js';
-
+<script>
 const MESH_DATA = {mesh_json};
 const PROJECT_TITLE = "{title}";
 const STATS = {{
@@ -734,7 +732,7 @@ scene.add(grid);
 const axes = new THREE.AxesHelper(radius * 1.8);
 scene.add(axes);
 
-const controls = new OrbitControls(camera, renderer.domElement);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.screenSpacePanning = true;
@@ -921,22 +919,18 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
   try {{
     const canvas = renderer.domElement;
 
-    // Crea un canvas composito
     const compositeCanvas = document.createElement('canvas');
     compositeCanvas.width = canvas.width;
     compositeCanvas.height = canvas.height;
     const ctx = compositeCanvas.getContext('2d');
 
-    // Disegna il canvas WebGL
     ctx.drawImage(canvas, 0, 0);
 
-    // --- Watermark con righe uniformi (label / value) ---
     const fontSize = Math.max(16, Math.floor(compositeCanvas.width / 60));
     const smallFontSize = Math.floor(fontSize * 0.8);
     const padding = fontSize * 1.5;
     let currentY = padding;
 
-    // Tutte le righe nello stesso formato: label a sinistra, valore a destra
     const rows = [
         {{ label: STATS.file_label, value: PROJECT_TITLE }},
         {{ label: STATS.vertex_short, value: STATS.vertex_count }},
@@ -950,12 +944,10 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     const valueRightEdge = padding + smallFontSize * 8;
 
     for (const row of rows) {{
-        // Label (grigio)
         ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
         ctx.textAlign = 'left';
         ctx.fillText(row.label, padding, currentY);
 
-        // Value (bianco) - allineato a destra
         ctx.fillStyle = 'rgba(230, 237, 243, 0.95)';
         ctx.textAlign = 'right';
         ctx.fillText(row.value, valueRightEdge, currentY);
@@ -964,10 +956,8 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
         currentY += smallFontSize * 1.6;
     }}
 
-    // Genera il blob PNG
     const dataUrl = compositeCanvas.toDataURL('image/png');
 
-    // Crea il download
     const link = document.createElement('a');
     const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
     const today = new Date().toISOString().split('T')[0];
@@ -999,14 +989,11 @@ document.getElementById('btn-download-html').addEventListener('click', function(
   const originalText = btn.textContent;
 
   try {{
-    // Recupera il sorgente HTML della pagina corrente
     const htmlSource = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
 
-    // Crea il blob
     const blob = new Blob([htmlSource], {{ type: 'text/html;charset=utf-8' }});
     const url = URL.createObjectURL(blob);
 
-    // Crea il download
     const link = document.createElement('a');
     const today = new Date().toISOString().split('T')[0];
     const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -1014,7 +1001,6 @@ document.getElementById('btn-download-html').addEventListener('click', function(
     link.href = url;
     link.click();
 
-    // Cleanup
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 
     btn.classList.add('success');
@@ -1062,6 +1048,9 @@ def mesh_to_html(
     """
     Genera un file HTML 3D self-contained con three.js e la mesh embedded.
 
+    Il file risultante funziona sia online (via HTTP) sia offline (file://)
+    perché three.js e OrbitControls sono inlineati direttamente nell'HTML.
+
     Parameters
     ----------
     mesh : MeshData da visualizzare
@@ -1084,6 +1073,10 @@ def mesh_to_html(
     labels = _VIEWER_LABELS[lang]
     lang_iso = "it" if lang == "it" else "en"
 
+    # Leggi gli asset JS inline (three.js UMD + OrbitControls UMD)
+    three_js = _read_asset("three.min.js")
+    orbit_js = _read_asset("OrbitControls.min.js")
+
     html = _HTML_TEMPLATE.format(
         title=title,
         lang_iso=lang_iso,
@@ -1092,6 +1085,8 @@ def mesh_to_html(
         source_format=source_format.upper(),
         logo_url=_ARTIFIX_LOGO_URL,
         mesh_json=_mesh_to_json(mesh),
+        three_js=three_js,
+        orbit_js=orbit_js,
         loading_text=labels["loading"],
         file_label=labels["file_label"],
         vertex_short=labels["vertex_short"],
@@ -1112,7 +1107,6 @@ def mesh_to_html(
         btn_solid=labels["btn_solid"],
         btn_flat=labels["btn_flat"],
         btn_xray=labels["btn_xray"],
-        # --- NUOVE STRINGHE ---
         btn_screenshot=labels["btn_screenshot"],
         btn_screenshot_title=labels["btn_screenshot_title"],
         btn_download_html=labels["btn_download_html"],
