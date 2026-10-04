@@ -45,8 +45,21 @@ _ASSETS_DIR = Path(__file__).parent / "assets"
 
 
 def _read_asset(name: str) -> str:
-    """Legge un file JS dagli assets e lo restituisce come stringa."""
-    return (_ASSETS_DIR / name).read_text(encoding="utf-8")
+    """
+    Legge un file JS dagli assets e lo restituisce come stringa,
+    con </script> escapato per non rompere il tag HTML in cui verrà inlineato.
+
+    Senza questo escape, se il JS contiene la stringa "</script>"
+    (frequente in librerie minificate come three.js), il browser chiude
+    il tag <script> in anticipo e il resto del codice JS viene
+    interpretato come HTML → SyntaxError.
+    """
+    js = (_ASSETS_DIR / name).read_text(encoding="utf-8")
+    # Escapa la sequenza che chiuderebbe prematuramente il tag <script>
+    js = js.replace("</script>", "<\\/script>")
+    # Per sicurezza, escapa anche le altre sequenze problematiche
+    js = js.replace("<!--", "<\\!--")
+    return js
 
 
 _VIEWER_LABELS = {
