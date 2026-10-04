@@ -20,6 +20,11 @@ E ANCHE OFFLINE (file://) perché tutte le librerie sono inline.
 
 Autore: alexcool-project
 Licenza: MIT
+
+NOTA TECNICA:
+  Il template HTML viene popolato con str.replace() invece di
+  str.format() per evitare conflitti con le graffe {} del CSS
+  e del JavaScript. I segnaposto sono nella forma __NOME__.
 """
 from __future__ import annotations
 
@@ -107,592 +112,346 @@ _VIEWER_LABELS = {
 
 
 _HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="{lang_iso}">
+<html lang="__LANG_ISO__">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>{title} — ArtiFix 3D Viewer</title>
-<link rel="icon" href="{logo_url}">
+<title>__TITLE__ — ArtiFix 3D Viewer</title>
+<link rel="icon" href="__LOGO_URL__">
 <style>
-  * {{ margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }}
-  html, body {{
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
     background: #0d1117;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #e6edf3;
-  }}
-  canvas {{ display: block; touch-action: none; }}
-
-  #artifix-logo {{
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 10;
+  }
+  canvas { display: block; touch-action: none; }
+  #artifix-logo {
+    position: absolute; top: 16px; right: 16px; z-index: 10;
     opacity: 0.55;
     transition: opacity 0.3s ease, transform 0.3s ease;
-    text-decoration: none;
-    display: block;
-    pointer-events: auto;
-  }}
-  #artifix-logo:hover {{
-    opacity: 1.0;
-    transform: scale(1.08);
-  }}
-  #artifix-logo img {{
-    width: 56px;
-    height: 56px;
-    display: block;
-    object-fit: contain;
+    text-decoration: none; display: block; pointer-events: auto;
+  }
+  #artifix-logo:hover { opacity: 1.0; transform: scale(1.08); }
+  #artifix-logo img {
+    width: 56px; height: 56px; display: block; object-fit: contain;
     filter: drop-shadow(0 2px 8px rgba(74, 158, 255, 0.25));
-  }}
-
-  #action-buttons {{
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  }
+  #action-buttons {
+    position: absolute; top: 16px; left: 16px; z-index: 10;
+    display: flex; flex-direction: column; gap: 8px;
     pointer-events: auto;
-  }}
-  .action-btn {{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
+  }
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 6px;
     padding: 10px 14px;
     background: rgba(13,17,23,0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid #21262d;
-    border-radius: 8px;
-    color: #e6edf3;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-decoration: none;
-    font-family: inherit;
-  }}
-  .action-btn:hover {{
-    background: #21262d;
-    border-color: #4a9eff;
-    transform: translateY(-1px);
-  }}
-  .action-btn:active {{
-    transform: translateY(0);
-  }}
-  .action-btn.success {{
-    background: #1f4a2e;
-    border-color: #2ecc71;
-    color: #2ecc71;
-  }}
-  .action-btn.error {{
-    background: #4a1f1f;
-    border-color: #e74c3c;
-    color: #e74c3c;
-  }}
-
-  #info {{
-    position: absolute;
-    top: 130px;
-    left: 16px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #21262d; border-radius: 8px;
+    color: #e6edf3; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s ease;
+    text-decoration: none; font-family: inherit;
+  }
+  .action-btn:hover { background: #21262d; border-color: #4a9eff; transform: translateY(-1px); }
+  .action-btn:active { transform: translateY(0); }
+  .action-btn.success { background: #1f4a2e; border-color: #2ecc71; color: #2ecc71; }
+  .action-btn.error { background: #4a1f1f; border-color: #e74c3c; color: #e74c3c; }
+  #info {
+    position: absolute; top: 130px; left: 16px;
     background: rgba(13,17,23,0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 14px 18px;
-    border-radius: 10px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 14px 18px; border-radius: 10px;
     border: 1px solid #21262d;
-    font-size: 13px;
-    line-height: 1.6;
-    z-index: 5;
-    min-width: 220px;
-    max-width: 320px;
-  }}
-  #info .stat {{
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    color: #8b949e;
-  }}
-  #info .stat .value {{
-    color: #e6edf3;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 180px;
-    text-align: right;
-  }}
-
-  #controls {{
-    position: absolute;
-    top: 200px;
-    right: 16px;
+    font-size: 13px; line-height: 1.6; z-index: 5;
+    min-width: 220px; max-width: 320px;
+  }
+  #info .stat { display: flex; justify-content: space-between; gap: 12px; color: #8b949e; }
+  #info .stat .value {
+    color: #e6edf3; font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 180px; text-align: right;
+  }
+  #controls {
+    position: absolute; top: 200px; right: 16px;
     background: rgba(13,17,23,0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 14px;
-    border-radius: 10px;
-    border: 1px solid #21262d;
-    z-index: 5;
-    width: 230px;
-  }}
-  #controls .control-group {{
-    margin-bottom: 12px;
-  }}
-  #controls .control-group:last-child {{
-    margin-bottom: 0;
-  }}
-  #controls label {{
-    display: block;
-    font-size: 12px;
-    color: #8b949e;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }}
-  #controls input[type="range"] {{
-    width: 100%;
-    accent-color: #4a9eff;
-  }}
-  #controls .row {{
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }}
-  #controls button {{
-    flex: 1;
-    min-width: 60px;
-    padding: 8px 10px;
-    background: #21262d;
-    color: #e6edf3;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }}
-  #controls button:hover {{
-    background: #30363d;
-    border-color: #4a9eff;
-  }}
-  #controls button.active {{
-    background: #1f77b4;
-    border-color: #4a9eff;
-    color: #fff;
-  }}
-
-  #reset-btn {{
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 14px; border-radius: 10px;
+    border: 1px solid #21262d; z-index: 5; width: 230px;
+  }
+  #controls .control-group { margin-bottom: 12px; }
+  #controls .control-group:last-child { margin-bottom: 0; }
+  #controls label {
+    display: block; font-size: 12px; color: #8b949e;
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  #controls input[type="range"] { width: 100%; accent-color: #4a9eff; }
+  #controls .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  #controls button {
+    flex: 1; min-width: 60px; padding: 8px 10px;
+    background: #21262d; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 6px;
+    font-size: 12px; cursor: pointer; transition: all 0.15s ease;
+  }
+  #controls button:hover { background: #30363d; border-color: #4a9eff; }
+  #controls button.active { background: #1f77b4; border-color: #4a9eff; color: #fff; }
+  #reset-btn {
+    position: absolute; bottom: 20px; right: 20px;
     padding: 10px 16px;
     background: rgba(13,17,23,0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid #21262d;
-    border-radius: 8px;
-    color: #e6edf3;
-    font-size: 13px;
-    cursor: pointer;
-    z-index: 15;
-    transition: all 0.15s ease;
-    pointer-events: auto;
-  }}
-  #reset-btn:hover {{
-    background: #21262d;
-    border-color: #4a9eff;
-  }}
-
-  #hints {{
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #21262d; border-radius: 8px;
+    color: #e6edf3; font-size: 13px; cursor: pointer;
+    z-index: 15; transition: all 0.15s ease; pointer-events: auto;
+  }
+  #reset-btn:hover { background: #21262d; border-color: #4a9eff; }
+  #hints {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
     background: rgba(13,17,23,0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 12px;
-    color: #8b949e;
-    z-index: 5;
-    pointer-events: none;
-  }}
-  #hints span {{
-    margin: 0 8px;
-  }}
-  #hints b {{
-    color: #4a9eff;
-    font-weight: 500;
-  }}
-
-  #info-mobile {{
-    display: none;
-    position: absolute;
-    top: 100px;
-    left: 14px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 8px 16px; border-radius: 20px;
+    font-size: 12px; color: #8b949e; z-index: 5; pointer-events: none;
+  }
+  #hints span { margin: 0 8px; }
+  #hints b { color: #4a9eff; font-weight: 500; }
+  #info-mobile {
+    display: none; position: absolute; top: 100px; left: 14px;
     background: rgba(13,17,23,0.9);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid #21262d;
-    font-size: 12px;
-    line-height: 1.5;
-    color: #8b949e;
-    z-index: 5;
-    max-width: 55%;
-    pointer-events: none;
-  }}
-  #info-mobile .stat {{
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-  }}
-  #info-mobile .stat .value {{
-    color: #e6edf3;
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 120px;
-    text-align: right;
-  }}
-
-  #controls-toggle {{
-    display: none;
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    padding: 10px 14px; border-radius: 10px;
+    border: 1px solid #21262d; font-size: 12px; line-height: 1.5;
+    color: #8b949e; z-index: 5; max-width: 55%; pointer-events: none;
+  }
+  #info-mobile .stat { display: flex; justify-content: space-between; gap: 8px; }
+  #info-mobile .stat .value {
+    color: #e6edf3; font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    max-width: 120px; text-align: right;
+  }
+  #controls-toggle {
+    display: none; position: fixed; bottom: 24px; right: 24px;
+    width: 56px; height: 56px; border-radius: 50%;
     background: linear-gradient(135deg, #1f77b4 0%, #4a9eff 100%);
-    border: none;
-    color: #ffffff;
-    font-size: 24px;
-    cursor: pointer;
-    z-index: 1000;
-    box-shadow: 0 4px 16px rgba(74, 158, 255, 0.5);
-    transition: transform 0.15s ease;
-    pointer-events: auto;
-    -webkit-appearance: none;
-    appearance: none;
-  }}
-  #controls-toggle:active {{
-    transform: scale(0.9);
-  }}
-
-  #controls-modal {{
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    border: none; color: #ffffff; font-size: 24px; cursor: pointer;
+    z-index: 1000; box-shadow: 0 4px 16px rgba(74, 158, 255, 0.5);
+    transition: transform 0.15s ease; pointer-events: auto;
+    -webkit-appearance: none; appearance: none;
+  }
+  #controls-toggle:active { transform: scale(0.9); }
+  #controls-modal {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0;
     background: rgba(13,17,23,0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    border-top: 1px solid #21262d;
-    padding: 20px;
-    z-index: 2000;
-    max-height: 70vh;
-    overflow-y: auto;
-    transform: translateY(100%);
-    transition: transform 0.3s ease;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-top-left-radius: 20px; border-top-right-radius: 20px;
+    border-top: 1px solid #21262d; padding: 20px;
+    z-index: 2000; max-height: 70vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.3s ease;
     pointer-events: auto;
-  }}
-  #controls-modal.open {{
-    transform: translateY(0);
-  }}
-  #controls-modal .modal-header {{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+  }
+  #controls-modal.open { transform: translateY(0); }
+  #controls-modal .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; padding-bottom: 12px;
     border-bottom: 1px solid #21262d;
-  }}
-  #controls-modal .modal-header h3 {{
-    font-size: 16px;
-    color: #4a9eff;
-    font-weight: 600;
-  }}
-  #controls-modal .close-btn {{
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #21262d;
-    border: none;
-    color: #e6edf3;
-    font-size: 18px;
-    cursor: pointer;
-    pointer-events: auto;
-  }}
-  #controls-modal .control-group {{
-    margin-bottom: 18px;
-  }}
-  #controls-modal label {{
-    display: block;
-    font-size: 13px;
-    color: #8b949e;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }}
-  #controls-modal input[type="range"] {{
-    width: 100%;
-    accent-color: #4a9eff;
-    height: 8px;
-    pointer-events: auto;
-  }}
-  #controls-modal .row {{
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-  }}
-  #controls-modal button.btn-control {{
-    flex: 1;
-    min-width: 70px;
-    padding: 14px 10px;
-    background: #21262d;
-    color: #e6edf3;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    pointer-events: auto;
-    -webkit-appearance: none;
-    appearance: none;
-  }}
-  #controls-modal button.btn-control.active {{
-    background: #1f77b4;
-    border-color: #4a9eff;
-    color: #fff;
-  }}
-
-  @media (max-width: 900px) {{
-    #info, #controls, #hints {{ display: none; }}
-    #info-mobile {{ display: block; }}
-    #controls-toggle {{ display: flex; align-items: center; justify-content: center; }}
-    #controls-modal {{ display: block; }}
-
-    #artifix-logo img {{ width: 42px; height: 42px; }}
-    #artifix-logo {{ top: 12px; right: 12px; }}
-
-    #action-buttons {{
-      top: 12px;
-      left: 12px;
-      flex-direction: row;
-      gap: 6px;
-    }}
-    .action-btn {{
-      padding: 8px 10px;
-      font-size: 12px;
-    }}
-
-    #reset-btn {{
-      bottom: 24px;
-      right: 90px;
-      padding: 12px 18px;
-      font-size: 13px;
-      border-radius: 28px;
+  }
+  #controls-modal .modal-header h3 { font-size: 16px; color: #4a9eff; font-weight: 600; }
+  #controls-modal .close-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #21262d; border: none; color: #e6edf3;
+    font-size: 18px; cursor: pointer; pointer-events: auto;
+  }
+  #controls-modal .control-group { margin-bottom: 18px; }
+  #controls-modal label {
+    display: block; font-size: 13px; color: #8b949e;
+    margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  #controls-modal input[type="range"] {
+    width: 100%; accent-color: #4a9eff; height: 8px; pointer-events: auto;
+  }
+  #controls-modal .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  #controls-modal button.btn-control {
+    flex: 1; min-width: 70px; padding: 14px 10px;
+    background: #21262d; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 8px;
+    font-size: 18px; cursor: pointer; transition: all 0.15s ease;
+    pointer-events: auto; -webkit-appearance: none; appearance: none;
+  }
+  #controls-modal button.btn-control.active {
+    background: #1f77b4; border-color: #4a9eff; color: #fff;
+  }
+  @media (max-width: 900px) {
+    #info, #controls, #hints { display: none; }
+    #info-mobile { display: block; }
+    #controls-toggle { display: flex; align-items: center; justify-content: center; }
+    #controls-modal { display: block; }
+    #artifix-logo img { width: 42px; height: 42px; }
+    #artifix-logo { top: 12px; right: 12px; }
+    #action-buttons { top: 12px; left: 12px; flex-direction: row; gap: 6px; }
+    .action-btn { padding: 8px 10px; font-size: 12px; }
+    #reset-btn {
+      bottom: 24px; right: 90px; padding: 12px 18px;
+      font-size: 13px; border-radius: 28px;
       background: rgba(13,17,23,0.9);
       box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    }}
-  }}
-
-  #loading {{
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    }
+  }
+  #loading {
+    position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    text-align: center;
-    z-index: 20;
-    color: #8b949e;
-  }}
-  #loading .spinner {{
-    width: 40px;
-    height: 40px;
-    border: 3px solid #21262d;
-    border-top-color: #4a9eff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+    text-align: center; z-index: 20; color: #8b949e;
+  }
+  #loading .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid #21262d; border-top-color: #4a9eff;
+    border-radius: 50%; animation: spin 1s linear infinite;
     margin: 0 auto 16px;
-  }}
-  @keyframes spin {{
-    to {{ transform: rotate(360deg); }}
-  }}
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div id="loading">
   <div class="spinner"></div>
-  {loading_text}
+  __LOADING_TEXT__
 </div>
 
-<a id="artifix-logo" href="https://www.artifix.it" target="_blank" rel="noopener" title="{logo_title}">
-  <img src="{logo_url}" alt="ArtiFix">
+<a id="artifix-logo" href="https://www.artifix.it" target="_blank" rel="noopener" title="__LOGO_TITLE__">
+  <img src="__LOGO_URL__" alt="ArtiFix">
 </a>
 
 <div id="action-buttons">
-  <button class="action-btn" id="btn-screenshot" title="{btn_screenshot_title}">
-    {btn_screenshot}
+  <button class="action-btn" id="btn-screenshot" title="__BTN_SCREENSHOT_TITLE__">
+    __BTN_SCREENSHOT__
   </button>
-  <button class="action-btn" id="btn-download-html" title="{btn_download_html_title}">
-    {btn_download_html}
+  <button class="action-btn" id="btn-download-html" title="__BTN_DOWNLOAD_HTML_TITLE__">
+    __BTN_DOWNLOAD_HTML__
   </button>
 </div>
 
 <div id="info">
-  <div class="stat"><span>{file_label}</span><span class="value">{title}</span></div>
-  <div class="stat"><span>{vertex_short}</span><span class="value">{vertex_count}</span></div>
-  <div class="stat"><span>{triangle_short}</span><span class="value">{triangle_count}</span></div>
-  <div class="stat"><span>{format_short}</span><span class="value">{source_format}</span></div>
+  <div class="stat"><span>__FILE_LABEL__</span><span class="value">__TITLE__</span></div>
+  <div class="stat"><span>__VERTEX_SHORT__</span><span class="value">__VERTEX_COUNT__</span></div>
+  <div class="stat"><span>__TRIANGLE_SHORT__</span><span class="value">__TRIANGLE_COUNT__</span></div>
+  <div class="stat"><span>__FORMAT_SHORT__</span><span class="value">__SOURCE_FORMAT__</span></div>
 </div>
 
 <div id="info-mobile">
-  <div class="stat"><span>{file_label}</span><span class="value">{title}</span></div>
-  <div class="stat"><span>{vertex_short}</span><span class="value">{vertex_count}</span></div>
-  <div class="stat"><span>{triangle_short}</span><span class="value">{triangle_count}</span></div>
-  <div class="stat"><span>{format_short}</span><span class="value">{source_format}</span></div>
+  <div class="stat"><span>__FILE_LABEL__</span><span class="value">__TITLE__</span></div>
+  <div class="stat"><span>__VERTEX_SHORT__</span><span class="value">__VERTEX_COUNT__</span></div>
+  <div class="stat"><span>__TRIANGLE_SHORT__</span><span class="value">__TRIANGLE_COUNT__</span></div>
+  <div class="stat"><span>__FORMAT_SHORT__</span><span class="value">__SOURCE_FORMAT__</span></div>
 </div>
 
 <div id="controls">
   <div class="control-group">
-    <label>{opacity_label}</label>
+    <label>__OPACITY_LABEL__</label>
     <input type="range" id="opacity-slider" min="10" max="100" value="100">
   </div>
   <div class="control-group">
-    <label>{display_label}</label>
+    <label>__DISPLAY_LABEL__</label>
     <div class="row">
-      <button id="btn-wireframe" title="{btn_wireframe}">📐</button>
-      <button id="btn-grid" class="active" title="{btn_grid}">▦</button>
-      <button id="btn-axes" class="active" title="{btn_axes}">✛</button>
+      <button id="btn-wireframe" title="__BTN_WIREFRAME__">📐</button>
+      <button id="btn-grid" class="active" title="__BTN_GRID__">▦</button>
+      <button id="btn-axes" class="active" title="__BTN_AXES__">✛</button>
     </div>
   </div>
   <div class="control-group">
-    <label>{material_label}</label>
+    <label>__MATERIAL_LABEL__</label>
     <div class="row">
-      <button id="btn-solid" class="active" title="{btn_solid}">◼</button>
-      <button id="btn-flat" title="{btn_flat}">◧</button>
-      <button id="btn-xray" title="{btn_xray}">◯</button>
+      <button id="btn-solid" class="active" title="__BTN_SOLID__">◼</button>
+      <button id="btn-flat" title="__BTN_FLAT__">◧</button>
+      <button id="btn-xray" title="__BTN_XRAY__">◯</button>
     </div>
   </div>
 </div>
 
-<button id="controls-toggle" title="{controls_title}">⚙️</button>
+<button id="controls-toggle" title="__CONTROLS_TITLE__">⚙️</button>
 
 <div id="controls-modal">
   <div class="modal-header">
-    <h3>{controls_title}</h3>
+    <h3>__CONTROLS_TITLE__</h3>
     <button class="close-btn" id="controls-modal-close">✕</button>
   </div>
-
   <div class="control-group">
-    <label>{opacity_label}</label>
+    <label>__OPACITY_LABEL__</label>
     <input type="range" id="opacity-slider-mobile" min="10" max="100" value="100">
   </div>
-
   <div class="control-group">
-    <label>{display_label}</label>
+    <label>__DISPLAY_LABEL__</label>
     <div class="row">
-      <button class="btn-control" id="btn-wireframe-mobile" title="{btn_wireframe}">📐</button>
-      <button class="btn-control active" id="btn-grid-mobile" title="{btn_grid}">▦</button>
-      <button class="btn-control active" id="btn-axes-mobile" title="{btn_axes}">✛</button>
+      <button class="btn-control" id="btn-wireframe-mobile" title="__BTN_WIREFRAME__">📐</button>
+      <button class="btn-control active" id="btn-grid-mobile" title="__BTN_GRID__">▦</button>
+      <button class="btn-control active" id="btn-axes-mobile" title="__BTN_AXES__">✛</button>
     </div>
   </div>
-
   <div class="control-group">
-    <label>{material_label}</label>
+    <label>__MATERIAL_LABEL__</label>
     <div class="row">
-      <button class="btn-control active" id="btn-solid-mobile" title="{btn_solid}">◼</button>
-      <button class="btn-control" id="btn-flat-mobile" title="{btn_flat}">◧</button>
-      <button class="btn-control" id="btn-xray-mobile" title="{btn_xray}">◯</button>
+      <button class="btn-control active" id="btn-solid-mobile" title="__BTN_SOLID__">◼</button>
+      <button class="btn-control" id="btn-flat-mobile" title="__BTN_FLAT__">◧</button>
+      <button class="btn-control" id="btn-xray-mobile" title="__BTN_XRAY__">◯</button>
     </div>
   </div>
 </div>
 
-<button id="reset-btn" title="Reset view">{reset_btn}</button>
+<button id="reset-btn" title="Reset view">__RESET_BTN__</button>
 
 <div id="hints">
-  <span>🖱️ <b>{hints_rotate}</b></span>
-  <span>🔍 <b>{hints_zoom}</b></span>
-  <span>✋ <b>{hints_pan}</b></span>
+  <span>🖱️ <b>__HINTS_ROTATE__</b></span>
+  <span>🔍 <b>__HINTS_ZOOM__</b></span>
+  <span>✋ <b>__HINTS_PAN__</b></span>
 </div>
 
 <!-- three.js r147 UMD inline (no CDN, funziona offline) -->
-<script>{three_js}</script>
+<script>__THREE_JS__</script>
 <!-- OrbitControls r147 UMD inline (no CDN, funziona offline) -->
-<script>{orbit_js}</script>
+<script>__ORBIT_JS__</script>
 
 <script>
 // ---------- UTILITY: filename leggibile ----------
-// Trasforma "21790_Matthew_Hall_Final_U_-_Copy_-_Copy_-_Copy_-_Copy_-_Copy"
-// in un nome compatto tipo "21790_Matthew_Hall_Final…"
-// Regole:
-//   1. Rimuove sequenze ripetute di "-_Copy", "_Copy", "Copy" (case-insensitive)
-//   2. Rimuove spazi e trattini residui ai bordi
-//   3. Tronca a MAX_CHARS caratteri con ellissi finale
+// Trasforma "21790_Matthew_Hall_Final_U_-_Copy_-_Copy_-_Copy"
+// in qualcosa tipo "21790_Matthew_Hall_Final"
 const MAX_FILENAME_CHARS = 34;
 
 function shortenFilename(name) {
   if (!name) return '';
   let s = String(name);
-
-  // Rimuove estensione se presente
   s = s.replace(/\.[a-zA-Z0-9]{1,6}$/, '');
-
-  // Rimuove pattern di "copia" ripetuti: _Copy, -Copy, _-_Copy, " (1)", " - Copy"
   s = s.replace(/([_\-\s]*copy([_\-\s]*\d+)?)+/gi, '');
   s = s.replace(/\s*\(\d+\)\s*/g, '');
-
-  // Rimuove separatori doppi tipo "__", "--", "_-_"
   s = s.replace(/[_\-\s]{2,}/g, '_');
-
-  // Rimuove separatori ai bordi
   s = s.replace(/^[_\-\s]+|[_\-\s]+$/g, '');
-
-  // Tronca con ellissi se troppo lungo
   if (s.length > MAX_FILENAME_CHARS) {
     s = s.slice(0, MAX_FILENAME_CHARS - 1).replace(/[_\-\s]+$/g, '') + '…';
   }
-
   return s || name;
 }
 
-const MESH_DATA = {mesh_json};
-const PROJECT_TITLE = "{title}";
+const MESH_DATA = __MESH_JSON__;
+const PROJECT_TITLE = "__TITLE__";
 const PROJECT_TITLE_SHORT = shortenFilename(PROJECT_TITLE);
 
-const STATS = {{
-  file_label: "{file_label}",
-  vertex_short: "{vertex_short}",
-  vertex_count: "{vertex_count}",
-  triangle_short: "{triangle_short}",
-  triangle_count: "{triangle_count}",
-  format_short: "{format_short}",
-  source_format: "{source_format}"
-}};
+const STATS = {
+  file_label: "__FILE_LABEL__",
+  vertex_short: "__VERTEX_SHORT__",
+  vertex_count: "__VERTEX_COUNT__",
+  triangle_short: "__TRIANGLE_SHORT__",
+  triangle_count: "__TRIANGLE_COUNT__",
+  format_short: "__FORMAT_SHORT__",
+  source_format: "__SOURCE_FORMAT__"
+};
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d1117);
 
 const camera = new THREE.PerspectiveCamera(
-  45,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  10000
+  45, window.innerWidth / window.innerHeight, 0.1, 10000
 );
 
-const renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: false, preserveDrawingBuffer: true }});
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, preserveDrawingBuffer: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
@@ -700,57 +459,42 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 const geometry = new THREE.BufferGeometry();
-geometry.setAttribute(
-  'position',
-  new THREE.Float32BufferAttribute(MESH_DATA.vertices_flat, 3)
-);
+geometry.setAttribute('position', new THREE.Float32BufferAttribute(MESH_DATA.vertices_flat, 3));
 geometry.setIndex(MESH_DATA.triangles_flat);
 geometry.computeVertexNormals();
 geometry.computeBoundingSphere();
 
-const material = new THREE.MeshStandardMaterial({{
-  color: 0x4a9eff,
-  metalness: 0.25,
-  roughness: 0.45,
-  flatShading: false,
-  side: THREE.DoubleSide,
-  transparent: false,
-  opacity: 1.0,
-}});
+const material = new THREE.MeshStandardMaterial({
+  color: 0x4a9eff, metalness: 0.25, roughness: 0.45,
+  flatShading: false, side: THREE.DoubleSide,
+  transparent: false, opacity: 1.0
+});
 
 const mesh = new THREE.Mesh(geometry, material);
 scene.add(mesh);
 
 const edges = new THREE.EdgesGeometry(geometry, 30);
-const lineMaterial = new THREE.LineBasicMaterial({{
-  color: 0x1f77b4,
-  linewidth: 1,
-  transparent: true,
-  opacity: 0.5,
-}});
+const lineMaterial = new THREE.LineBasicMaterial({
+  color: 0x1f77b4, linewidth: 1, transparent: true, opacity: 0.5
+});
 const wireframe = new THREE.LineSegments(edges, lineMaterial);
 wireframe.visible = false;
 mesh.add(wireframe);
 
 const center = geometry.boundingSphere.center.clone();
 const radius = geometry.boundingSphere.radius;
-
 mesh.position.sub(center);
-
 camera.position.set(radius * 2.5, radius * 2, radius * 2.5);
 camera.lookAt(0, 0, 0);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
 const keyLight = new THREE.DirectionalLight(0xffffff, 1.3);
 keyLight.position.set(5, 8, 5);
 keyLight.castShadow = true;
 scene.add(keyLight);
-
 const fillLight = new THREE.DirectionalLight(0x9bc4ff, 0.5);
 fillLight.position.set(-5, 3, -5);
 scene.add(fillLight);
-
 const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
 rimLight.position.set(0, -5, 0);
 scene.add(rimLight);
@@ -770,44 +514,41 @@ controls.minDistance = radius * 0.3;
 controls.maxDistance = radius * 30;
 controls.autoRotate = false;
 controls.autoRotateSpeed = 1.5;
-controls.touches = {{
-  ONE: THREE.TOUCH.ROTATE,
-  TWO: THREE.TOUCH.DOLLY_PAN,
-}};
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
 
 const DEFAULT_CAM_POS = camera.position.clone();
 const DEFAULT_CAM_TARGET = new THREE.Vector3(0, 0, 0);
 
-window.addEventListener('resize', () => {{
+window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-}});
+});
 
-function animate() {{
+function animate() {
   requestAnimationFrame(animate);
   controls.update();
   renderer.render(scene, camera);
-}}
+}
 
-requestAnimationFrame(() => {{
-  requestAnimationFrame(() => {{
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
     document.getElementById('loading').style.display = 'none';
     animate();
-  }});
-}});
+  });
+});
 
 const opacitySlider = document.getElementById('opacity-slider');
 const opacitySliderMobile = document.getElementById('opacity-slider-mobile');
 
-function setOpacity(val) {{
+function setOpacity(val) {
   const v = parseInt(val) / 100;
   material.transparent = v < 1.0;
   material.opacity = v;
   material.needsUpdate = true;
   if (opacitySlider) opacitySlider.value = val;
   if (opacitySliderMobile) opacitySliderMobile.value = val;
-}}
+}
 
 opacitySlider.addEventListener('input', (e) => setOpacity(e.target.value));
 opacitySliderMobile.addEventListener('input', (e) => setOpacity(e.target.value));
@@ -815,38 +556,32 @@ opacitySliderMobile.addEventListener('input', (e) => setOpacity(e.target.value))
 const btnWireframe = document.getElementById('btn-wireframe');
 const btnWireframeMobile = document.getElementById('btn-wireframe-mobile');
 let wireframeOn = false;
-
-function toggleWireframe() {{
+function toggleWireframe() {
   wireframeOn = !wireframeOn;
   wireframe.visible = wireframeOn;
   btnWireframe.classList.toggle('active', wireframeOn);
   btnWireframeMobile.classList.toggle('active', wireframeOn);
-}}
-
+}
 btnWireframe.addEventListener('click', toggleWireframe);
 btnWireframeMobile.addEventListener('click', toggleWireframe);
 
 const btnGrid = document.getElementById('btn-grid');
 const btnGridMobile = document.getElementById('btn-grid-mobile');
-
-function toggleGrid() {{
+function toggleGrid() {
   grid.visible = !grid.visible;
   btnGrid.classList.toggle('active', grid.visible);
   btnGridMobile.classList.toggle('active', grid.visible);
-}}
-
+}
 btnGrid.addEventListener('click', toggleGrid);
 btnGridMobile.addEventListener('click', toggleGrid);
 
 const btnAxes = document.getElementById('btn-axes');
 const btnAxesMobile = document.getElementById('btn-axes-mobile');
-
-function toggleAxes() {{
+function toggleAxes() {
   axes.visible = !axes.visible;
   btnAxes.classList.toggle('active', axes.visible);
   btnAxesMobile.classList.toggle('active', axes.visible);
-}}
-
+}
 btnAxes.addEventListener('click', toggleAxes);
 btnAxesMobile.addEventListener('click', toggleAxes);
 
@@ -857,38 +592,28 @@ const btnSolidMobile = document.getElementById('btn-solid-mobile');
 const btnFlatMobile = document.getElementById('btn-flat-mobile');
 const btnXrayMobile = document.getElementById('btn-xray-mobile');
 
-function setMaterial(mode) {{
+function setMaterial(mode) {
   [btnSolid, btnFlat, btnXray, btnSolidMobile, btnFlatMobile, btnXrayMobile].forEach(b => b.classList.remove('active'));
-
-  if (mode === 'solid') {{
-    material.flatShading = false;
-    material.transparent = false;
-    material.opacity = 1.0;
-    material.color.setHex(0x4a9eff);
+  if (mode === 'solid') {
+    material.flatShading = false; material.transparent = false;
+    material.opacity = 1.0; material.color.setHex(0x4a9eff);
     material.needsUpdate = true;
-    btnSolid.classList.add('active');
-    btnSolidMobile.classList.add('active');
+    btnSolid.classList.add('active'); btnSolidMobile.classList.add('active');
     setOpacity(100);
-  }} else if (mode === 'flat') {{
-    material.flatShading = true;
-    material.transparent = false;
-    material.opacity = 1.0;
-    material.color.setHex(0x6bb6ff);
+  } else if (mode === 'flat') {
+    material.flatShading = true; material.transparent = false;
+    material.opacity = 1.0; material.color.setHex(0x6bb6ff);
     material.needsUpdate = true;
-    btnFlat.classList.add('active');
-    btnFlatMobile.classList.add('active');
+    btnFlat.classList.add('active'); btnFlatMobile.classList.add('active');
     setOpacity(100);
-  }} else if (mode === 'xray') {{
-    material.flatShading = false;
-    material.transparent = true;
-    material.opacity = 0.35;
-    material.color.setHex(0x9bc4ff);
+  } else if (mode === 'xray') {
+    material.flatShading = false; material.transparent = true;
+    material.opacity = 0.35; material.color.setHex(0x9bc4ff);
     material.needsUpdate = true;
-    btnXray.classList.add('active');
-    btnXrayMobile.classList.add('active');
+    btnXray.classList.add('active'); btnXrayMobile.classList.add('active');
     setOpacity(35);
-  }}
-}}
+  }
+}
 
 btnSolid.addEventListener('click', () => setMaterial('solid'));
 btnFlat.addEventListener('click', () => setMaterial('flat'));
@@ -897,63 +622,38 @@ btnSolidMobile.addEventListener('click', () => setMaterial('solid'));
 btnFlatMobile.addEventListener('click', () => setMaterial('flat'));
 btnXrayMobile.addEventListener('click', () => setMaterial('xray'));
 
-document.getElementById('reset-btn').addEventListener('click', () => {{
+document.getElementById('reset-btn').addEventListener('click', () => {
   camera.position.copy(DEFAULT_CAM_POS);
   controls.target.copy(DEFAULT_CAM_TARGET);
   controls.update();
-}});
+});
 
 const controlsToggle = document.getElementById('controls-toggle');
 const controlsModal = document.getElementById('controls-modal');
 const controlsModalClose = document.getElementById('controls-modal-close');
-
-function openControlsModal(e) {{
-  e.preventDefault();
-  e.stopPropagation();
-  controlsModal.classList.add('open');
-}}
-
-function closeControlsModal(e) {{
-  if (e) {{
-    e.preventDefault();
-    e.stopPropagation();
-  }}
-  controlsModal.classList.remove('open');
-}}
-
+function openControlsModal(e) { e.preventDefault(); e.stopPropagation(); controlsModal.classList.add('open'); }
+function closeControlsModal(e) { if (e) { e.preventDefault(); e.stopPropagation(); } controlsModal.classList.remove('open'); }
 controlsToggle.addEventListener('click', openControlsModal);
-controlsToggle.addEventListener('touchstart', openControlsModal, {{ passive: false }});
-
+controlsToggle.addEventListener('touchstart', openControlsModal, { passive: false });
 controlsModalClose.addEventListener('click', closeControlsModal);
-controlsModalClose.addEventListener('touchstart', closeControlsModal, {{ passive: false }});
+controlsModalClose.addEventListener('touchstart', closeControlsModal, { passive: false });
+controlsModal.addEventListener('click', (e) => { if (e.target === controlsModal) closeControlsModal(); });
 
-controlsModal.addEventListener('click', (e) => {{
-  if (e.target === controlsModal) {{
-    closeControlsModal();
-  }}
-}});
-
-renderer.domElement.addEventListener('dblclick', () => {{
-  if (!document.fullscreenElement) {{
-    document.documentElement.requestFullscreen();
-  }} else {{
-    document.exitFullscreen();
-  }}
-}});
+renderer.domElement.addEventListener('dblclick', () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+});
 
 // ---------- SCREENSHOT BUTTON ----------
-document.getElementById('btn-screenshot').addEventListener('click', async function() {{
+document.getElementById('btn-screenshot').addEventListener('click', async function() {
   const btn = this;
   const originalText = btn.textContent;
-
-  try {{
+  try {
     const canvas = renderer.domElement;
-
     const compositeCanvas = document.createElement('canvas');
     compositeCanvas.width = canvas.width;
     compositeCanvas.height = canvas.height;
     const ctx = compositeCanvas.getContext('2d');
-
     ctx.drawImage(canvas, 0, 0);
 
     const fontSize = Math.max(16, Math.floor(compositeCanvas.width / 60));
@@ -961,41 +661,35 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     const padding = fontSize * 1.5;
     let currentY = padding;
 
-    // Filename GIÀ accorciato (shortenFilename applicato sopra)
     const rows = [
-        {{ label: STATS.file_label, value: PROJECT_TITLE_SHORT }},
-        {{ label: STATS.vertex_short, value: STATS.vertex_count }},
-        {{ label: STATS.triangle_short, value: STATS.triangle_count }},
-        {{ label: STATS.format_short, value: STATS.source_format }}
+      { label: STATS.file_label, value: PROJECT_TITLE_SHORT },
+      { label: STATS.vertex_short, value: STATS.vertex_count },
+      { label: STATS.triangle_short, value: STATS.triangle_count },
+      { label: STATS.format_short, value: STATS.source_format }
     ];
 
-    ctx.font = `${{smallFontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.font = smallFontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textBaseline = 'top';
 
-    // Layout: label a sinistra, valore a destra con margini fissi
     const labelX = padding;
     const valueRightEdge = padding + smallFontSize * 16;
     const valueMaxWidth = smallFontSize * 15;
 
-    // Troncamento di sicurezza: se anche PROJECT_TITLE_SHORT sfugge
-    function fitText(text, maxWidth) {{
+    function fitText(text, maxWidth) {
       if (ctx.measureText(text).width <= maxWidth) return text;
       const ellipsis = '…';
       let truncated = text;
-      while (truncated.length > 1 &&
-             ctx.measureText(truncated + ellipsis).width > maxWidth) {{
+      while (truncated.length > 1 && ctx.measureText(truncated + ellipsis).width > maxWidth) {
         truncated = truncated.slice(0, -1);
-      }}
+      }
       return truncated + ellipsis;
-    }}
+    }
 
-    for (const row of rows) {{
-      // Label
+    for (const row of rows) {
       ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
       ctx.textAlign = 'left';
       ctx.fillText(row.label, labelX, currentY);
 
-      // Valore (con fitText di sicurezza)
       const safeValue = fitText(String(row.value), valueMaxWidth);
       ctx.fillStyle = 'rgba(230, 237, 243, 0.95)';
       ctx.textAlign = 'right';
@@ -1003,72 +697,53 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
       ctx.textAlign = 'left';
 
       currentY += smallFontSize * 1.6;
-    }}
+    }
 
     const dataUrl = compositeCanvas.toDataURL('image/png');
-
     const link = document.createElement('a');
     const safeTitle = PROJECT_TITLE_SHORT.replace(/[^a-zA-Z0-9_-]/g, '_') || 'artifix';
     const today = new Date().toISOString().split('T')[0];
-    link.download = `${{safeTitle}}_${{today}}.png`;
+    link.download = safeTitle + '_' + today + '.png';
     link.href = dataUrl;
     link.click();
 
     btn.classList.add('success');
-    btn.textContent = '{screenshot_success}';
-    setTimeout(() => {{
-      btn.classList.remove('success');
-      btn.textContent = originalText;
-    }}, 2000);
-
-  }} catch (err) {{
+    btn.textContent = '__SCREENSHOT_SUCCESS__';
+    setTimeout(() => { btn.classList.remove('success'); btn.textContent = originalText; }, 2000);
+  } catch (err) {
     console.error('Screenshot error:', err);
     btn.classList.add('error');
-    btn.textContent = '{screenshot_error}';
-    setTimeout(() => {{
-      btn.classList.remove('error');
-      btn.textContent = originalText;
-    }}, 2000);
-  }}
-}});
+    btn.textContent = '__SCREENSHOT_ERROR__';
+    setTimeout(() => { btn.classList.remove('error'); btn.textContent = originalText; }, 2000);
+  }
+});
 
 // ---------- DOWNLOAD HTML BUTTON ----------
-document.getElementById('btn-download-html').addEventListener('click', function() {{
+document.getElementById('btn-download-html').addEventListener('click', function() {
   const btn = this;
   const originalText = btn.textContent;
-
-  try {{
-    const htmlSource = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
-
-    const blob = new Blob([htmlSource], {{ type: 'text/html;charset=utf-8' }});
+  try {
+    const htmlSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement('a');
     const today = new Date().toISOString().split('T')[0];
     const safeTitle = PROJECT_TITLE_SHORT.replace(/[^a-zA-Z0-9_-]/g, '_') || 'artifix';
-    link.download = `${{safeTitle}}_${{today}}.html`;
+    link.download = safeTitle + '_' + today + '.html';
     link.href = url;
     link.click();
-
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 
     btn.classList.add('success');
-    btn.textContent = '{download_success}';
-    setTimeout(() => {{
-      btn.classList.remove('success');
-      btn.textContent = originalText;
-    }}, 2000);
-
-  }} catch (err) {{
+    btn.textContent = '__DOWNLOAD_SUCCESS__';
+    setTimeout(() => { btn.classList.remove('success'); btn.textContent = originalText; }, 2000);
+  } catch (err) {
     console.error('Download error:', err);
     btn.classList.add('error');
-    btn.textContent = '{screenshot_error}';
-    setTimeout(() => {{
-      btn.classList.remove('error');
-      btn.textContent = originalText;
-    }}, 2000);
-  }}
-}});
+    btn.textContent = '__SCREENSHOT_ERROR__';
+    setTimeout(() => { btn.classList.remove('error'); btn.textContent = originalText; }, 2000);
+  }
+});
 </script>
 </body>
 </html>
@@ -1115,55 +790,57 @@ def mesh_to_html(
     output = Path(output)
     title = title or mesh.name or "Modello 3D"
 
-    # Normalizza lang
     lang = (lang or "it").lower()
     if lang not in _VIEWER_LABELS:
         lang = "it"
     labels = _VIEWER_LABELS[lang]
     lang_iso = "it" if lang == "it" else "en"
 
-    # Leggi gli asset JS inline (three.js UMD + OrbitControls UMD)
     three_js = _read_asset("three.min.js")
     orbit_js = _read_asset("OrbitControls.min.js")
 
-    html = _HTML_TEMPLATE.format(
-        title=title,
-        lang_iso=lang_iso,
-        vertex_count=f"{mesh.vertex_count:,}".replace(",", "."),
-        triangle_count=f"{mesh.triangle_count:,}".replace(",", "."),
-        source_format=source_format.upper(),
-        logo_url=_ARTIFIX_LOGO_URL,
-        mesh_json=_mesh_to_json(mesh),
-        three_js=three_js,
-        orbit_js=orbit_js,
-        loading_text=labels["loading"],
-        file_label=labels["file_label"],
-        vertex_short=labels["vertex_short"],
-        triangle_short=labels["triangle_short"],
-        format_short=labels["format_short"],
-        controls_title=labels["controls_title"],
-        opacity_label=labels["opacity_label"],
-        display_label=labels["display_label"],
-        material_label=labels["material_label"],
-        reset_btn=labels["reset_btn"],
-        hints_rotate=labels["hints_rotate"],
-        hints_zoom=labels["hints_zoom"],
-        hints_pan=labels["hints_pan"],
-        logo_title=labels["logo_title"],
-        btn_wireframe=labels["btn_wireframe"],
-        btn_grid=labels["btn_grid"],
-        btn_axes=labels["btn_axes"],
-        btn_solid=labels["btn_solid"],
-        btn_flat=labels["btn_flat"],
-        btn_xray=labels["btn_xray"],
-        btn_screenshot=labels["btn_screenshot"],
-        btn_screenshot_title=labels["btn_screenshot_title"],
-        btn_download_html=labels["btn_download_html"],
-        btn_download_html_title=labels["btn_download_html_title"],
-        screenshot_success=labels["screenshot_success"],
-        screenshot_error=labels["screenshot_error"],
-        download_success=labels["download_success"],
-    )
+    substitutions = {
+        "__TITLE__": title,
+        "__LANG_ISO__": lang_iso,
+        "__VERTEX_COUNT__": f"{mesh.vertex_count:,}".replace(",", "."),
+        "__TRIANGLE_COUNT__": f"{mesh.triangle_count:,}".replace(",", "."),
+        "__SOURCE_FORMAT__": source_format.upper(),
+        "__LOGO_URL__": _ARTIFIX_LOGO_URL,
+        "__MESH_JSON__": _mesh_to_json(mesh),
+        "__THREE_JS__": three_js,
+        "__ORBIT_JS__": orbit_js,
+        "__LOADING_TEXT__": labels["loading"],
+        "__FILE_LABEL__": labels["file_label"],
+        "__VERTEX_SHORT__": labels["vertex_short"],
+        "__TRIANGLE_SHORT__": labels["triangle_short"],
+        "__FORMAT_SHORT__": labels["format_short"],
+        "__CONTROLS_TITLE__": labels["controls_title"],
+        "__OPACITY_LABEL__": labels["opacity_label"],
+        "__DISPLAY_LABEL__": labels["display_label"],
+        "__MATERIAL_LABEL__": labels["material_label"],
+        "__RESET_BTN__": labels["reset_btn"],
+        "__HINTS_ROTATE__": labels["hints_rotate"],
+        "__HINTS_ZOOM__": labels["hints_zoom"],
+        "__HINTS_PAN__": labels["hints_pan"],
+        "__LOGO_TITLE__": labels["logo_title"],
+        "__BTN_WIREFRAME__": labels["btn_wireframe"],
+        "__BTN_GRID__": labels["btn_grid"],
+        "__BTN_AXES__": labels["btn_axes"],
+        "__BTN_SOLID__": labels["btn_solid"],
+        "__BTN_FLAT__": labels["btn_flat"],
+        "__BTN_XRAY__": labels["btn_xray"],
+        "__BTN_SCREENSHOT__": labels["btn_screenshot"],
+        "__BTN_SCREENSHOT_TITLE__": labels["btn_screenshot_title"],
+        "__BTN_DOWNLOAD_HTML__": labels["btn_download_html"],
+        "__BTN_DOWNLOAD_HTML_TITLE__": labels["btn_download_html_title"],
+        "__SCREENSHOT_SUCCESS__": labels["screenshot_success"],
+        "__SCREENSHOT_ERROR__": labels["screenshot_error"],
+        "__DOWNLOAD_SUCCESS__": labels["download_success"],
+    }
+
+    html = _HTML_TEMPLATE
+    for key, value in substitutions.items():
+        html = html.replace(key, str(value))
 
     output.write_text(html, encoding="utf-8")
     return output
