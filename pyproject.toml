@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mesh2u3d"
-version = "0.2.0"
+version = "0.2.1"
 description = "Convert 3D meshes to U3D (ECMA-363), HTML 3D (three.js) and PDF with embedded 3D"
 readme = "README.md"
 license = { text = "MIT" }
