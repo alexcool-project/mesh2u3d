@@ -45,16 +45,8 @@ _ASSETS_DIR = Path(__file__).parent / "assets"
 
 
 def _read_asset(name: str) -> str:
-    """
-    Legge un file JS dagli assets e lo restituisce come stringa,
-    con le sequenze che rompono l'inline HTML opportunamente escaapate.
-    """
-    js = (_ASSETS_DIR / name).read_text(encoding="utf-8")
-    js = js.replace("</script", "<\\/script")
-    js = js.replace("<!--", "<\\!--")
-    js = js.replace("\u2028", "\\u2028")
-    js = js.replace("\u2029", "\\u2029")
-    return js
+    """Legge un file JS dagli assets e lo restituisce come stringa."""
+    return (_ASSETS_DIR / name).read_text(encoding="utf-8")
 
 
 _VIEWER_LABELS = {
