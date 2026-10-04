@@ -31,13 +31,11 @@ import numpy as np
 from ..io.mesh_reader import MeshData
 
 
-# URL del logo ufficiale ArtiFix (dal repo pubblico mesh2u3d-viewer)
 _ARTIFIX_LOGO_URL = (
     "https://raw.githubusercontent.com/alexcool-project/"
     "mesh2u3d-viewer/main/assets/ArchiFix_cubo-logo.png"
 )
 
-# Directory degli asset JS da inlineare
 _ASSETS_DIR = Path(__file__).parent / "assets"
 
 
@@ -45,8 +43,6 @@ def _read_asset(name: str) -> str:
     """Legge un file JS dagli assets e lo restituisce come stringa."""
     return (_ASSETS_DIR / name).read_text(encoding="utf-8")
 
-
-# ---------- Stringhe multilingua per il viewer ----------
 
 _VIEWER_LABELS = {
     "it": {
@@ -109,8 +105,6 @@ _VIEWER_LABELS = {
     },
 }
 
-
-# ---------- Template HTML ----------
 
 _HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="{lang_iso}">
@@ -640,8 +634,44 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <script>{orbit_js}</script>
 
 <script>
+// ---------- UTILITY: filename leggibile ----------
+// Trasforma "21790_Matthew_Hall_Final_U_-_Copy_-_Copy_-_Copy_-_Copy_-_Copy"
+// in un nome compatto tipo "21790_Matthew_Hall_Final…"
+// Regole:
+//   1. Rimuove sequenze ripetute di "-_Copy", "_Copy", "Copy" (case-insensitive)
+//   2. Rimuove spazi e trattini residui ai bordi
+//   3. Tronca a MAX_CHARS caratteri con ellissi finale
+const MAX_FILENAME_CHARS = 34;
+
+function shortenFilename(name) {
+  if (!name) return '';
+  let s = String(name);
+
+  // Rimuove estensione se presente
+  s = s.replace(/\.[a-zA-Z0-9]{1,6}$/, '');
+
+  // Rimuove pattern di "copia" ripetuti: _Copy, -Copy, _-_Copy, " (1)", " - Copy"
+  s = s.replace(/([_\-\s]*copy([_\-\s]*\d+)?)+/gi, '');
+  s = s.replace(/\s*\(\d+\)\s*/g, '');
+
+  // Rimuove separatori doppi tipo "__", "--", "_-_"
+  s = s.replace(/[_\-\s]{2,}/g, '_');
+
+  // Rimuove separatori ai bordi
+  s = s.replace(/^[_\-\s]+|[_\-\s]+$/g, '');
+
+  // Tronca con ellissi se troppo lungo
+  if (s.length > MAX_FILENAME_CHARS) {
+    s = s.slice(0, MAX_FILENAME_CHARS - 1).replace(/[_\-\s]+$/g, '') + '…';
+  }
+
+  return s || name;
+}
+
 const MESH_DATA = {mesh_json};
 const PROJECT_TITLE = "{title}";
+const PROJECT_TITLE_SHORT = shortenFilename(PROJECT_TITLE);
+
 const STATS = {{
   file_label: "{file_label}",
   vertex_short: "{vertex_short}",
@@ -931,8 +961,9 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     const padding = fontSize * 1.5;
     let currentY = padding;
 
+    // Filename GIÀ accorciato (shortenFilename applicato sopra)
     const rows = [
-        {{ label: STATS.file_label, value: PROJECT_TITLE }},
+        {{ label: STATS.file_label, value: PROJECT_TITLE_SHORT }},
         {{ label: STATS.vertex_short, value: STATS.vertex_count }},
         {{ label: STATS.triangle_short, value: STATS.triangle_count }},
         {{ label: STATS.format_short, value: STATS.source_format }}
@@ -941,25 +972,43 @@ document.getElementById('btn-screenshot').addEventListener('click', async functi
     ctx.font = `${{smallFontSize}}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textBaseline = 'top';
 
-    const valueRightEdge = padding + smallFontSize * 8;
+    // Layout: label a sinistra, valore a destra con margini fissi
+    const labelX = padding;
+    const valueRightEdge = padding + smallFontSize * 16;
+    const valueMaxWidth = smallFontSize * 15;
+
+    // Troncamento di sicurezza: se anche PROJECT_TITLE_SHORT sfugge
+    function fitText(text, maxWidth) {{
+      if (ctx.measureText(text).width <= maxWidth) return text;
+      const ellipsis = '…';
+      let truncated = text;
+      while (truncated.length > 1 &&
+             ctx.measureText(truncated + ellipsis).width > maxWidth) {{
+        truncated = truncated.slice(0, -1);
+      }}
+      return truncated + ellipsis;
+    }}
 
     for (const row of rows) {{
-        ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
-        ctx.textAlign = 'left';
-        ctx.fillText(row.label, padding, currentY);
+      // Label
+      ctx.fillStyle = 'rgba(139, 148, 158, 0.9)';
+      ctx.textAlign = 'left';
+      ctx.fillText(row.label, labelX, currentY);
 
-        ctx.fillStyle = 'rgba(230, 237, 243, 0.95)';
-        ctx.textAlign = 'right';
-        ctx.fillText(row.value, valueRightEdge, currentY);
-        ctx.textAlign = 'left';
+      // Valore (con fitText di sicurezza)
+      const safeValue = fitText(String(row.value), valueMaxWidth);
+      ctx.fillStyle = 'rgba(230, 237, 243, 0.95)';
+      ctx.textAlign = 'right';
+      ctx.fillText(safeValue, valueRightEdge, currentY);
+      ctx.textAlign = 'left';
 
-        currentY += smallFontSize * 1.6;
+      currentY += smallFontSize * 1.6;
     }}
 
     const dataUrl = compositeCanvas.toDataURL('image/png');
 
     const link = document.createElement('a');
-    const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeTitle = PROJECT_TITLE_SHORT.replace(/[^a-zA-Z0-9_-]/g, '_') || 'artifix';
     const today = new Date().toISOString().split('T')[0];
     link.download = `${{safeTitle}}_${{today}}.png`;
     link.href = dataUrl;
@@ -996,7 +1045,7 @@ document.getElementById('btn-download-html').addEventListener('click', function(
 
     const link = document.createElement('a');
     const today = new Date().toISOString().split('T')[0];
-    const safeTitle = PROJECT_TITLE.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const safeTitle = PROJECT_TITLE_SHORT.replace(/[^a-zA-Z0-9_-]/g, '_') || 'artifix';
     link.download = `${{safeTitle}}_${{today}}.html`;
     link.href = url;
     link.click();
