@@ -723,7 +723,7 @@ document.getElementById('btn-download-html').addEventListener('click', function(
   const btn = this;
   const originalText = btn.textContent;
   try {
-    const htmlSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const htmlSource = '<!DOCTYPE html>\\n' + document.documentElement.outerHTML;
     const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
